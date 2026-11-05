@@ -48,7 +48,7 @@ module.exports = async function handler(req,res){
   if(req.method!=="POST"){res.setHeader("Allow","POST");return send(res,405,"Method not allowed");}
   const apiKey=process.env.OPENAI_API_KEY;
   const accessCode=process.env.PROTOTYPE_ACCESS_CODE;
-  if(!apiKey||!accessCode){return send(res,503,"AI generation is not configured. The free local style-study portal is still available.");}
+  if(!accessCode||!(apiKey||process.env.VERCEL_OIDC_TOKEN||process.env.AI_GATEWAY_API_KEY)){return send(res,503,"AI generation is not configured. The free local style-study portal is still available.");}
   if(!safeEqual(req.headers["x-prototype-code"],accessCode)){return send(res,401,"Incorrect prototype access code.");}
   const body=typeof req.body==="string"?JSON.parse(req.body||"{}"):req.body||{};
   const engineId=typeof body.engineId==="string"?body.engineId:"";
@@ -85,6 +85,30 @@ module.exports = async function handler(req,res){
     "Return only an original finished visual artwork. Do not include AI interface controls or watermarks."
   ].join("\n\n");
   const size={square:"1024x1024",portrait:"1024x1536",landscape:"1536x1024"}[aspect];
+  // Prefer zero-secret Vercel AI Gateway when a provider-specific API key is absent.
+  // This uses the Vercel deployment's automatic OIDC token and the AI SDK.
+  if(!apiKey){
+    try{
+      const ai=await import("ai");
+      const sourceImage=photo?Buffer.from(photo.split(",")[1],"base64"):null;
+      const result=await ai.generateImage({
+        model:process.env.GATEWAY_IMAGE_MODEL||"openai/gpt-image-2.5-flare",
+        prompt:sourceImage?{text:prompt,images:[sourceImage]}:prompt,
+        size,
+        abortSignal:AbortSignal.timeout(75000)
+      });
+      const generated=result.images&&result.images[0]?result.images[0]:result.image;
+      const base64=generated?.base64||(generated?.uint8Array?Buffer.from(generated.uint8Array).toString("base64"):"");
+      const media=generated?.mediaType||"image/png";
+      if(!base64)return send(res,502,"The image gateway returned no artwork.");
+      if(base64.length>3900000)return send(res,502,"The image was too large for this prototype response.");
+      return res.status(200).json({imageDataUrl:"data:"+media+";base64,"+base64,engineId,medium:"image",creatorWorkflowPrivate:true});
+    }catch(err){
+      console.error("AI Gateway generation error:",err?.name,err?.message);
+      const message=err?.name==="AbortError"||err?.name==="TimeoutError"?"Image generation timed out.":"AI Gateway could not create this image. Check gateway access, credits, project settings and content restrictions.";
+      return send(res,502,message);
+    }
+  }
   const model=process.env.IMAGE_MODEL||"gpt-image-2.5-flare";
   const payload=photo?{
     model,images:[{image_url:photo}],prompt,size,quality:"medium",n:1,output_format:"webp",output_compression:70
