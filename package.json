@@ -1,0 +1,13 @@
+{
+  "name": "musehouse-ai-art",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Artist-owned creative engine marketplace prototype",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "ai": "^6.0.0"
+  }
+}
