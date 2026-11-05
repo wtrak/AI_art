@@ -139,8 +139,7 @@ module.exports=async function handler(req,res){
    if(!c.guide)return send(res,422,{error:"Create an initial guide first."});
    const feedback=text(body.feedback,1600);
    if(!feedback)return send(res,422,{error:"Explain what to refine."});
-   response=await modelJSON(COMPILE+"
-ARTIST CORRECTION (authoritative): "+feedback+"
+   response=await modelJSON(COMPILE+"\nARTIST CORRECTION (authoritative): "+feedback+"
 Refine existing guide rather than rewriting it without reason.",c,[],4500);
   }
   if(!response||typeof response!=="object")throw Error("Empty curator answer");
