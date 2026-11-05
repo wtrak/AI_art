@@ -48,7 +48,7 @@ module.exports = async function handler(req,res){
   if(req.method!=="POST"){res.setHeader("Allow","POST");return send(res,405,"Method not allowed");}
   const apiKey=process.env.OPENAI_API_KEY;
   const accessCode=process.env.PROTOTYPE_ACCESS_CODE;
-  if(!accessCode||!(apiKey||process.env.VERCEL_OIDC_TOKEN||process.env.AI_GATEWAY_API_KEY)){return send(res,503,"AI generation is not configured. The free local style-study portal is still available.");}
+  if(!accessCode||!(apiKey||process.env.VERCEL||process.env.VERCEL_OIDC_TOKEN||process.env.AI_GATEWAY_API_KEY||req.headers["x-vercel-oidc-token"])){return send(res,503,"AI generation is not configured. The free local style-study portal is still available.");}
   if(!safeEqual(req.headers["x-prototype-code"],accessCode)){return send(res,401,"Incorrect prototype access code.");}
   const body=typeof req.body==="string"?JSON.parse(req.body||"{}"):req.body||{};
   const engineId=typeof body.engineId==="string"?body.engineId:"";
