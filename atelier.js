@@ -1,1 +1,1 @@
-(function(){ 'use strict'; const s=document.createElement('script'); s.src='atelier-core.js'; document.head.appendChild(s); })();
+(function(){for(const name of ["atelier-base.js","atelier-logic.js","atelier-init.js"]){const tag=document.createElement("script");tag.src=name;tag.async=false;document.head.appendChild(tag)}})();
