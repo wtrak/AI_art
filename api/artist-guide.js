@@ -6,7 +6,7 @@ const text=(v,n=1000)=>typeof v==="string"?v.slice(0,n):"";
 const send=(res,s,v)=>res.status(s).json(v);
 function compare(x,y){const a=Buffer.from(String(x||"")),b=Buffer.from(String(y||""));return a.length>0&&a.length===b.length&&crypto.timingSafeEqual(a,b)}
 function readJSON(raw){
- let s=String(raw||"").trim().replace(/^`jsons*/,""); // removed below
+ let s=String(raw||"").trim();
  try{return JSON.parse(s)}catch(_){}
  const a=s.indexOf("{"),b=s.lastIndexOf("}");if(a<0||b<=a)throw Error("Unparseable AI JSON");
  return JSON.parse(s.slice(a,b+1));
@@ -32,8 +32,7 @@ const INSTRUCTION=[
  "A vague aesthetic description is insufficient. Ask pointed questions with concrete choices and contrasts.",
  "One engine must embody one clearly defined specialty. Never silently merge unrelated styles.",
  "Return valid JSON only, without explanation or markdown."
-].join("
-");
+].join("\n");
 function referenceParts(refs){
  const parts=[];
  if(!Array.isArray(refs))return parts;
@@ -44,7 +43,7 @@ function referenceParts(refs){
   const data=text(r.data,1400000);
   if(kind==="pdf"&&/^data:application/pdf;base64,[A-Za-z0-9+/=]+$/.test(data)){
    parts.push({type:"file",mediaType:"application/pdf",data:Buffer.from(data.split(",")[1],"base64")});
-  }else if(kind==="image"&&/^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(data)){
+  }else if(kind==="image"&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(data)){
    parts.push({type:"image",image:Buffer.from(data.split(",")[1],"base64"),mediaType:data.slice(5,data.indexOf(";"))});
   }
  }
@@ -54,8 +53,7 @@ async function modelJSON(task,c,parts,maxOutputTokens){
  const {generateText}=await import("ai");
  const result=await generateText({
   model:MODEL,
-  messages:[{role:"system",content:INSTRUCTION+"
-"+task},{role:"user",content:[{type:"text",text:"Artist evidence: "+JSON.stringify(c).slice(0,28000)},...parts]}],
+  messages:[{role:"system",content:INSTRUCTION+"\n"+task},{role:"user",content:[{type:"text",text:"Artist evidence: "+JSON.stringify(c).slice(0,28000)},...parts]}],
   maxOutputTokens,
   abortSignal:AbortSignal.timeout(75000)
  });
@@ -68,8 +66,7 @@ const ANALYZE=[
  '"patterns":["recurring visible choices"],"tensions":["important differences between samples"],',
  '"firstQuestion":"one pointed question referring to a concrete choice in reference materials","gaps":["missing information"],"confidence":50}',
  "When materials contain no image, ground findings solely in creator statements. Confidence 0-100."
-].join("
-");
+].join("\n");
 const INTERVIEW=[
  "ACTION: continue creative interview from history. Ask exactly ONE conversational question, connected to prior answers or reference evidence.",
  "Explore WHY they made choices, tradeoffs, negative examples, adjustment to new subject matter, restrictions.",
@@ -78,8 +75,7 @@ const INTERVIEW=[
  '{"reply":"brief reflection and one targeted question","insights":[{"fact":"a useful rule","source":"artist statement / observed / inferred"}],',
  '"gaps":["still missing"],"readiness":35,"coverage":{"composition":20,"color":20,"lighting":20,"texture":20,"adaptation":20,"boundaries":20}}',
  "Scores 0-100; be conservative."
-].join("
-");
+].join("\n");
 const COMPILE=[
  "ACTION: write reusable PRIVATE operational creative engine guide based only on sourced material, distinguishing uncertainty.",
  "Capture HOW artist decides, not merely a style adjective list or a fixed image prompt.",
@@ -95,8 +91,7 @@ const COMPILE=[
  '"uncertainties":["unconfirmed, unresolved decisions"],"confidence":65},',
  '"summary":"what was captured","openQuestions":["high-impact follow-up"]}',
  "Be detailed, actionable, and artist-specific. Never fabricate ownership, intent, or precision."
-].join("
-");
+].join("\n");
 async function test(c,body){
  if(!c.guide)return {status:422,data:{error:"Compile a creative guide before testing."}};
  const prompt=text(body.testPrompt,1200).trim();
@@ -106,15 +101,13 @@ async function test(c,body){
  const instructions=[
   "Generate one original artwork. Apply this creator-owned private artistic decision guide, not a generic style label.",
   "Respect the artist's invariants, negative rules and customer subject. Do not put the guide text into the image.",
-  "ARTIST PRIVATE GUIDE:
-"+JSON.stringify(c.guide).slice(0,15000),
-  "CUSTOMER REQUEST:
-"+prompt
+  "ARTIST PRIVATE GUIDE:\n"+JSON.stringify(c.guide).slice(0,15000),
+  "CUSTOMER REQUEST:\n"+prompt
  ].join("
 
 ");
  const photo=text(body.testReference,1400000);
- const source= /^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)?[Buffer.from(photo.split(",")[1],"base64")]:[];
+ const source= /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)?[Buffer.from(photo.split(",")[1],"base64")]:[];
  const result=await generateImage({model:IMAGE_MODEL,prompt:source.length?{text:instructions,images:source}:instructions,size:"1024x1024",abortSignal:AbortSignal.timeout(90000)});
  const image=result.images?.[0]||result.image;
  const b64=image?.base64||(image?.uint8Array?Buffer.from(image.uint8Array).toString("base64"):"");
