@@ -41,9 +41,9 @@ function referenceParts(refs){
   parts.push({type:"text",text:JSON.stringify({name,note,kind})});
   if(kind==="text"){parts.push({type:"text",text:"Text reference: "+text(r.text,4500)});continue}
   const data=text(r.data,1400000);
-  if(kind==="pdf"&&/^data:application\/pdf;base64,[A-Za-z0-9+/=]+$/.test(data)){
+  if(kind==="pdf"&&/^data:application\/pdf;base64,[A-Za-z0-9+\/=]+$/.test(data)){
    parts.push({type:"file",mediaType:"application/pdf",data:Buffer.from(data.split(",")[1],"base64")});
-  }else if(kind==="image"&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(data)){
+  }else if(kind==="image"&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(data)){
    parts.push({type:"image",image:Buffer.from(data.split(",")[1],"base64"),mediaType:data.slice(5,data.indexOf(";"))});
   }
  }
@@ -105,7 +105,7 @@ async function test(c,body){
   "CUSTOMER REQUEST:\n"+prompt
  ].join("\n\n");
  const photo=text(body.testReference,1400000);
- const source= /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)?[Buffer.from(photo.split(",")[1],"base64")]:[];
+ const source= /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(photo)?[Buffer.from(photo.split(",")[1],"base64")]:[];
  const result=await generateImage({model:IMAGE_MODEL,prompt:source.length?{text:instructions,images:source}:instructions,size:"1024x1024",abortSignal:AbortSignal.timeout(90000)});
  const image=result.images?.[0]||result.image;
  const b64=image?.base64||(image?.uint8Array?Buffer.from(image.uint8Array).toString("base64"):"");
