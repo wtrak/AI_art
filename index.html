@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7f5f0">
+<meta name="description" content="Musehouse is a creative playground. Choose an artist's private creative engine and make something entirely yours.">
+<title>Musehouse — Your imagination. Their magic.</title>
+<link rel="stylesheet" href="/styles.css">
+</head><body>
+<div class="topbar">THE CREATIVE CLUB IS OPEN · DISCOVER NEW WAYS TO MAKE</div>
+<header class="shell nav">
+  <a class="logo" href="#discover" aria-label="Musehouse home"><i>✳</i>musehouse<span style="font-family:Arial;font-size:12px;letter-spacing:0">®</span></a>
+  <nav class="navlinks" aria-label="Main navigation">
+    <button type="button" data-route="discover" class="active">Discover</button>
+    <button type="button" data-route="explore">Creative engines</button>
+    <button type="button" data-route="workshop">Creator workshop</button>
+    <button type="button" data-route="economics">How artists earn</button>
+  </nav>
+  <div class="nav-actions"><span id="credit-pill" class="credit-pill"><i class="dot"></i>30 demo credits</span><button id="my-studio" class="button small">Open portal ↗</button></div>
+</header>
+<main>
+  <section class="page active" id="page-discover" data-page="discover">
+    <div class="shell hero">
+      <div>
+        <div class="eyebrow">Welcome to the world's most curious art room ✳</div>
+        <h1 class="serif">Your imagination.<br><em>Their magic.</em></h1>
+        <p class="lead">Your favorite creatives have bottled up their signature process. Pick an artist-made engine, dream something up, and make it your own—right here, right now.</p>
+        <div class="hero-actions"><button class="button big orange" data-go="explore">Explore the engines ↗</button><button class="button big outline" data-go="workshop">I'm a creator</button></div>
+        <p class="muted" style="font-size:12px;margin-top:25px">✦ No commissions. No waiting. Just you, your imagination, and their creative brain.</p>
+      </div>
+      <div class="hero-art" aria-label="Artist-made style study examples">
+        <div class="sheet one"><canvas width="450" height="600" data-hero-engine="sunprint"></canvas></div>
+        <div class="sheet two"><canvas width="450" height="600" data-hero-engine="streetlight"></canvas></div>
+        <div class="sheet three"><canvas width="450" height="600" data-hero-engine="folklore"></canvas></div>
+        <div class="hero-sticker">THE WORLD<br>IS YOUR<br>ART ROOM ✳</div>
+      </div>
+    </div>
+    <div class="ribbon"><div class="ribbon-inner">ARTISTS MAKE THE RULES <span>✳</span> YOU MAKE THE ART <span>✳</span> CREATIVITY GETS PAID <span>✳</span> EVERYONE GETS TO PLAY <span>✳</span></div></div>
+    <section class="shell section">
+      <div class="section-heading"><div><span class="eyebrow">Start with a spark</span><h2>Pick a creative brain<br>to borrow.</h2></div><p>Not filters. Not downloadable prompts. Private, artist-built creative engines you can explore from inside your own AI workspace.</p></div>
+      <div class="filterbar" id="featured-filters"></div>
+      <div class="gallery" id="featured-gallery"></div>
+      <div style="margin-top:28px;text-align:center"><button class="button outline" data-go="explore">See all creative engines ↗</button></div>
+    </section>
+    <section class="creator-section"><div class="shell section"><div class="section-heading"><div><span class="eyebrow">The people behind the magic</span><h2>Human taste. Infinite play.</h2></div><p>One creator. Several unique engines. Every use supports the person whose process makes it special.</p></div><div id="home-creators" class="creator-grid"></div></div></section>
+    <section class="shell manifesto"><div><span class="eyebrow">The new creative economy</span><h2>Pay for the taste.<br>Keep the wonder.</h2><p>Artists do the creative thinking once, privately. People like you use their artistic workflows over and over. Creators earn from the engines people actually love—not hours spent answering requests.</p><button class="button outline" data-go="economics">See the model →</button></div><div class="manifesto-poster"><div class="poster-word">Make<br>some<br>magic.</div><div class="burst">✳</div></div></section>
+  </section>
+  <section class="page" id="page-explore" data-page="explore">
+    <div class="shell section"><div class="section-heading"><div><span class="eyebrow">The engine library</span><h2>Find your creative obsession.</h2></div><p>Choose a medium, browse the work, and jump straight into the portal. Every engine has its own creative signature.</p></div><div class="filterbar"><div id="explore-filters" style="display:flex;flex-wrap:wrap;gap:8px;flex:1"></div><input id="engine-search" class="search-input" placeholder="Search styles or creators..." aria-label="Search engines"></div><div class="gallery" id="explore-gallery"></div></div>
+  </section>
+  <section class="page" id="page-profile" data-page="profile"><div class="shell"><div id="profile-heading"></div><section class="section"><div class="section-heading"><div><span class="eyebrow">Inside their creative world</span><h2>Choose an engine.</h2></div><p>A creator may have many engines, each designed for something different. Choose one and make it yours.</p></div><div class="gallery" id="profile-engines"></div></section></div></section>
+  <section class="page" id="page-portal" data-page="portal">
+    <div class="shell"><div class="page-header"><span class="eyebrow">The creative playground / image lab</span><h1 class="big-title">Make something impossible.</h1><p class="muted" style="margin-top:13px">Your imagination drives. The artist's private engine handles the creative decisions. Nothing is sent to the artist.</p></div>
+    <div class="workspace-grid">
+      <div class="workspace-panel">
+        <div class="eyebrow">01 / Select your engine</div><div class="engine-picker" id="engine-picker"></div><button class="link" id="browse-engines" style="margin-top:10px">Browse every engine ↗</button>
+        <div style="height:1px;background:var(--border);margin:20px 0"></div>
+        <div class="eyebrow">02 / Bring your idea</div>
+        <label class="field"><span>What do you want to create?</span><textarea id="user-prompt" maxlength="1500" placeholder="An old seaside hotel in the rain, soft lights glowing through every window..."></textarea></label>
+        <div class="sample-prompts" id="sample-prompts"></div>
+        <label class="field"><span>Reference photo (optional)</span></label><div class="upload-area"><div id="photo-placeholder">Drop in your image or <label for="photo-input">choose a photo</label></div><input id="photo-input" type="file" accept="image/png,image/jpeg,image/webp" style="display:none"><div id="upload-preview"></div><button class="link" id="remove-photo" style="display:none;margin-top:10px">Remove photo ×</button></div>
+        <label class="field"><span>Canvas shape</span></label><div class="segmented" id="aspect-options"><button data-aspect="square" class="selected" type="button">1:1 · Square</button><button data-aspect="portrait" type="button">2:3 · Tall</button><button data-aspect="landscape" type="button">3:2 · Wide</button></div>
+        <label class="field"><span>How much of the artist's magic?</span></label><div class="segmented" id="influence-options"><button type="button" data-influence="subtle">Subtle</button><button type="button" data-influence="signature" class="selected">Signature</button><button type="button" data-influence="bold">Wild</button></div>
+        <div class="protected"><span style="font-size:24px">♜</span><div><strong>The secret sauce stays secret.</strong><small>The server applies the creator's private workflow. You see the finished creation, never the engine recipe. No artist contact or manual approval.</small></div></div>
+        <button id="study-btn" class="button big orange" style="width:100%">✳ Create a free style study</button>
+        <p class="disclaimer" style="margin:8px 0 14px">Local visual prototype. This is <b>not AI generation</b> and does not spend credits.</p>
+        <button id="ai-btn" class="button big" style="width:100%">✦ Generate with AI · 1 credit</button>
+        <p id="api-status" class="status">Checking live image-generation connection…</p>
+      </div>
+      <div class="result-pane">
+        <div class="result-top"><div><div class="eyebrow" style="margin-bottom:7px">YOUR CREATIVE CANVAS</div><h2 id="result-heading">Something wonderful begins here.</h2></div><span id="result-tag" class="studio-badge">Ready when you are</span></div>
+        <div class="result-canvas-wrap" id="result-wrap"><div class="empty-state" id="result-empty"><div class="empty-icon">✳</div><h3>Make a little magic.</h3><p>Choose your engine, describe your idea, and create. Try a free procedural style study or connect a private AI endpoint for actual image generation.</p></div><canvas id="result-canvas" style="display:none"></canvas><img id="result-image" alt="AI-generated artwork" style="display:none"></div>
+        <div class="result-actions"><button class="button pale" id="download-btn" disabled>↓ Download PNG</button><button class="button pale" id="variation-btn" disabled>↻ New variation</button><button class="button pale" id="save-btn" disabled>♡ Save to collection</button></div>
+        <p id="result-note" class="status">The artist's underlying recipe never appears in your portal.</p>
+      </div>
+    </div></div>
+    <section class="shell section" style="padding-top:0"><div class="section-heading"><div><span class="eyebrow">Your creative trail</span><h2>Recent experiments.</h2></div><button class="link" id="clear-history">Clear local history</button></div><div id="history-grid" class="history-grid"></div></section>
+  </section>
+  <section class="page" id="page-workshop" data-page="workshop"><div class="shell section"><div class="section-heading"><div><span class="eyebrow">Creator-side preview / draft studio</span><h2>One artist.<br>Infinite engines.</h2></div><p>Front-load your creativity into private repeatable workflows. Then let the platform do the work. These workshop drafts stay in this browser only.</p></div>
+    <div class="callout"><h3>Your taste is the product.</h3><p style="max-width:730px;line-height:1.7;margin:0">A photographer can have separate engines for cinematic street scenes, weddings and portraits. A painter can publish impressionism, botanical drawings and landscapes. Subscribers never message you—they simply run the engines you authorized.</p></div>
+    <div class="workshop-grid"><div class="paper-card"><h3>Design a new engine.</h3><p class="disclaimer">This is an editable private-workflow <b>drafting sandbox</b>. Drafts are saved only on this device. They are not remotely stored, published, protected by a server, or available for real AI generations until onboarded.</p>
+       <label class="field"><span>Artist / studio name</span><input id="draft-artist" placeholder="e.g. The Studio of Alex Green" maxlength="80"></label>
+       <label class="field"><span>Name this engine</span><input id="draft-name" placeholder="e.g. Misty Architectural Watercolor" maxlength="80"></label>
+       <label class="field"><span>Medium</span><select id="draft-medium"><option value="Art">Fine art / illustration</option><option value="Photography">Photography</option><option value="Design">Graphic design</option><option value="Music">Music (future adapter)</option></select></label>
+       <label class="field"><span>What makes your creative process unique?</span><textarea id="draft-workflow" maxlength="3500" placeholder="Describe your composition decisions, subjects, palettes, light, texture, mood, proportions, workflow stages, visual habits, and what you refuse to do…"></textarea></label>
+       <label class="field"><span>Creative restrictions</span><input id="draft-restrictions" maxlength="300" placeholder="e.g. no political campaigns, no commercial usage"></label>
+       <button class="button orange" id="save-draft" style="margin-top:18px">Save a private local draft ↗</button><p class="disclaimer" style="margin-top:12px">Do not enter valuable unpublished secrets on a shared or public computer. Real creator data will need encrypted authenticated server storage.</p>
+    </div><div class="paper-card"><h3>Draft collection.</h3><div id="draft-list" class="draft-list"></div><div style="height:1px;background:var(--border);margin:22px 0"></div><h3>How one creator expands.</h3><div class="credit-line"><span>Photographer → Street engine</span><strong>1 license</strong></div><div class="credit-line"><span>Photographer → Wedding engine</span><strong>1 license</strong></div><div class="credit-line"><span>Photographer → Portrait engine</span><strong>1 license</strong></div><div class="credit-line"><span>Publisher-managed, always available</span><strong>24 / 7</strong></div><p class="disclaimer" style="margin-top:20px">Each published engine gets its own permitted uses, price weight, royalty history, revision policy and quality tests. Artists never need to fulfill orders individually.</p></div></div></div></section>
+  <section class="page" id="page-economics" data-page="economics"><div class="shell section"><div class="section-heading"><div><span class="eyebrow">An artist-first economy</span><h2>The more their magic is used,<br>the more they earn.</h2></div><p>Subscribers pay for access to the AI portal. A defined share of eligible subscription revenue is attributed to creators by usage—not commissions, followers or messages.</p></div>
+    <div class="two-col"><div><div class="callout"><span class="eyebrow">Illustrative plan · not real billing</span><h3 style="font-size:44px;margin:10px 0">$24<span style="font:500 16px 'DM Sans',sans-serif"> / month</span></h3><p style="line-height:1.6;margin:0">40 monthly generation credits. Pick from any participating visual creator. Each completed generation consumes a credit and contributes to that creator's use score.</p></div><div class="paper-card"><h3>Where a subscription goes.</h3><p class="disclaimer">Example only: if $24 revenue yields $16 after direct processing, generation expenses and adjustments, a hypothetical 45% creator pool is $7.20. Actual costs, margins and percentages require testing.</p><div class="stat-grid"><div class="stat"><strong>$24</strong><small>Subscriber pays</small></div><div class="stat"><strong>$16</strong><small>Illustrative net</small></div><div class="stat"><strong>$7.20</strong><small>45% artist pool</small></div></div></div></div>
+      <div class="paper-card"><h3>Usage-weighted royalties.</h3><p class="disclaimer">Example of one subscriber's usage, allocated within their hypothetical $7.20 pool. Real subscriptions and payouts are not enabled.</p><div class="bar-chart" id="royalty-chart"></div><div style="height:1px;background:var(--border);margin:24px 0"></div><h3>See your demo usage.</h3><div id="usage-ledger"></div><p class="disclaimer" style="margin-top:15px">This ledger is stored in your own browser and has no monetary value. No payments have been collected and no artist has been paid.</p></div></div>
+    <div class="paper-card" style="margin-top:24px"><h3>What creators control.</h3><div class="stat-grid" style="gap:12px"><div><b>✳ Artistic identity</b><p class="disclaimer">Composition rules, aesthetic, references, private workflows and multiple individual engines.</p></div><div><b>✳ Permissions</b><p class="disclaimer">Subjects, prohibited uses, commercial licensing, content restrictions and visibility.</p></div><div><b>✳ Economics</b><p class="disclaimer">Weights per engine, transparent reporting, version control and rights to unpublish.</p></div></div></div>
+  </div></section>
+</main>
+<footer class="footer"><div class="shell footer-row"><div><div class="logo" style="color:#fff"><i>✳</i>musehouse</div><div class="muted" style="font-size:12px;margin-top:8px">A new home for human-made creative intelligence.</div></div><div class="muted" style="font-size:12px;max-width:480px;text-align:right">Concept prototype · Fictional artists and sample engines. Style studies are procedural local renders, not AI generation. No payments or real creator royalties occur here.</div></div></footer>
+<div class="modal-backdrop" id="access-modal" role="dialog" aria-modal="true" aria-labelledby="modal-heading"><div class="modal"><button class="modal-close" id="close-modal" aria-label="Close">×</button><div class="eyebrow">Prototype AI generation</div><h2 id="modal-heading">Unlock the private engine.</h2><p class="muted" style="line-height:1.6">To prevent accidental API charges, this prototype requires an access code set by the site owner in Vercel's server environment.</p><label class="field"><span>Prototype access code</span><input id="access-code" type="password" autocomplete="off" placeholder="Site-owner access code"></label><button id="run-ai" class="button orange" style="margin-top:17px;width:100%">Generate AI image · 1 demo credit</button><p class="notice">This demo has no payment processing. Real generation works only when the site owner adds an AI API key and an access code in server configuration.</p></div></div>
+<div id="toast" role="status" style="position:fixed;z-index:50;bottom:20px;right:20px;max-width:360px;border-radius:9px;background:#292522;color:#fff;padding:14px 18px;font-size:13px;display:none;box-shadow:0 12px 25px #0003"></div>
+<script src="/app.js" defer></script>
+</body></html>
