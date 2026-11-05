@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7f5f0"><title>The Atelier — Musehouse Creator Studio</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="atelier.css"></head>
+<body>
+<div class="topbar">MUSEHOUSE · THE CREATOR'S PRIVATE ATELIER</div>
+<header class="shell nav"><a href="index.html#discover" class="logo"><i>✳</i>musehouse</a><nav class="navlinks"><a href="index.html#discover">← The clubhouse</a><a href="index.html#explore">Explore engines</a><a class="active" href="atelier.html">Creator atelier</a></nav><div class="nav-actions"><span class="credit-pill">✦ Artist pilot</span></div></header>
+<main class="shell">
+<section class="atelier-hero"><div><div class="eyebrow">THE CREATOR'S ATELIER / PRIVATE PILOT</div><h1 class="serif">Bottle up the way<br><em>you see the world.</em></h1><p>Upload the work you're proud of. Tell our AI curator how you think. Together, turn the decisions behind your art into a reusable creative engine—without handing your customers the recipe.</p></div><div class="art-symbol" aria-hidden="true">✳<span>HUMAN<br>MAGIC,<br>PRESERVED.</span></div></section>
+<div class="atelier-stepper" id="steps" aria-label="Onboarding stages"></div>
+<div class="atelier-workarea">
+ <div class="atelier-content">
+  <section class="atelier-stage" data-stage="identity">
+   <div class="stage-number">01 / INTRODUCE YOUR CREATIVE WORLD</div><h2 class="serif">What's your particular kind of magic?</h2><p class="muted">Start with one narrow specialty, not your entire career. You can publish a different engine for wedding photography, street photography, painting, or any other process.</p>
+   <div class="field-grid"><label class="field"><span>Artist / studio name</span><input id="a-name" maxlength="100" placeholder="e.g. Amelia Monroe"></label><label class="field"><span>Engine name</span><input id="a-engine" maxlength="100" placeholder="e.g. Dreamlike Wedding Portraits"></label></div>
+   <label class="field"><span>Your medium</span><select id="a-medium"><option value="Art">Illustration & painting</option><option value="Photography">Photography</option><option value="Design">Graphic design</option><option value="Music">Music & sound (interview-only pilot)</option></select></label>
+   <label class="field"><span>Explain this specific creative practice in your own words</span><textarea id="a-intent" rows="5" maxlength="1200" placeholder="I photograph candid moments using natural light, reflections and a slightly uneasy sense of distance. I care more about genuine emotion than posed perfection..."></textarea></label>
+   <label class="field"><span>Anything you will never create or license?</span><textarea id="a-exclusions" rows="3" maxlength="700" placeholder="Examples: no political campaigns, no synthetic likenesses of real people without consent, no explicit material..."></textarea></label>
+   <div class="atelier-actions"><button class="button orange big" id="to-references">Bring in your work →</button><span class="muted">You can always come back and edit.</span></div>
+  </section>
+  <section class="atelier-stage" data-stage="references" hidden>
+   <div class="stage-number">02 / SHOW, DON'T JUST TELL</div><h2 class="serif">Teach us with your favorite pieces.</h2><p class="muted">Upload up to six examples of your own work. Add context for the AI: what makes each piece successful, what you deliberately avoided, and what you want preserved.</p>
+   <div class="upload-target"><div style="font-size:36px">↟</div><h3>Drop your original work here</h3><p>JPG, PNG, WebP, PDFs or TXT files · up to 6 · large images are reduced on your device</p><label for="reference-input" class="button pale">Choose reference files</label><input id="reference-input" type="file" multiple accept="image/png,image/jpeg,image/webp,application/pdf,text/plain" hidden></div>
+   <div id="reference-cards" class="reference-grid"></div>
+   <div class="studio-privacy">♜ <b>Private pilot materials.</b> In this version, reference files remain in your browser until submitted for analysis. They are sent to the AI provider for that request, but are not stored in GitHub or the prototype's database. Draft notes and condensed analyses are saved locally. This is not production-grade secure storage.</div>
+   <div class="atelier-actions"><button class="button orange big" id="analyze-refs">✳ Analyze my work with AI</button><button class="button outline" id="manual-interview">Start interview without files →</button></div>
+   <div id="analysis-pending" class="stage-status" role="status"></div>
+  </section>
+  <section class="atelier-stage" data-stage="interview" hidden>
+   <div class="stage-number">03 / THE CREATIVE CONVERSATION</div><h2 class="serif">An interview with your imagination.</h2><p class="muted">The AI asks one thoughtful question at a time. Help it understand not only what your work looks like, but why you make the choices you do.</p>
+   <div class="insight-strip" id="analysis-overview"></div>
+   <div id="conversation" class="conversation" aria-live="polite"></div>
+   <form id="chat-form" class="chat-form"><label for="chat-input" class="eyebrow">YOUR RESPONSE</label><textarea id="chat-input" rows="4" maxlength="1800" placeholder="Tell us why, not just what. What would you change? What did you intentionally leave out?"></textarea><div class="chat-controls"><span id="chat-status" role="status">Tell the curator what matters.</span><button id="send-answer" type="submit" class="button orange">Send & deepen the interview ↗</button></div></form>
+   <div class="atelier-actions"><button class="button outline" id="compile-guide">✳ Distill my creative DNA</button><span class="muted">You can refine it later through another round of questions.</span></div>
+  </section>
+  <section class="atelier-stage" data-stage="guide" hidden>
+   <div class="stage-number">04 / THE SECRET RECIPE · YOUR EYES ONLY</div><h2 class="serif">Your creativity, distilled.</h2><p class="muted">The AI assembles a working interpretation of your artistic decisions. Read it like an editor: tell us exactly what it got wrong or missed. This is a <b>private working draft</b>, not a published engine.</p>
+   <div class="summary-note" id="guide-summary"></div>
+   <div id="guide-fields" class="guide-fields"></div>
+   <div class="draft-toolbar"><button class="button outline" id="edit-json">Edit the private guide</button><button class="button outline" id="download-guide">↓ Export private guide</button><button class="button outline" id="back-interview">↶ Ask more questions</button></div>
+   <div id="guide-edit-area" hidden><label class="field"><span>Edit guide JSON (local draft)</span><textarea id="guide-json" rows="14" spellcheck="false"></textarea></label><button id="save-guide-edit" class="button orange">Save edits to draft</button></div>
+   <div class="refine-box"><label class="field"><span>What did the curator misunderstand?</span><textarea id="refine-feedback" rows="3" maxlength="1600" placeholder="This is too saturated. I actually use warm muted colors and almost never center a subject. Also, avoid smooth skin..."></textarea></label><button class="button orange" id="refine-guide">Ask AI to revise my recipe ↗</button></div>
+   <div class="atelier-actions"><button class="button orange big" id="to-test">Test this creative engine →</button></div>
+  </section>
+  <section class="atelier-stage" data-stage="test" hidden>
+   <div class="stage-number">05 / MAKE SURE IT REALLY FEELS LIKE YOU</div><h2 class="serif">Would you recognize this as yours?</h2><p class="muted">Give the engine a subject you haven't created before. Use the output to judge whether your signature rules survived. If it misses, return to the interview or revise the private guide.</p>
+   <label class="field"><span>Surprise test request</span><textarea id="test-prompt" rows="3" maxlength="1200" placeholder="A small bookstore hidden in a rainy city, lit from within at dusk"></textarea></label>
+   <div class="test-prompts"><button type="button" data-test-sample="A seaside café in the rain at twilight">Seaside café</button><button type="button" data-test-sample="A quiet portrait of a musician waiting backstage">Backstage portrait</button><button type="button" data-test-sample="An imaginary botanical conservatory on another planet">Alien conservatory</button></div>
+   <div class="atelier-actions"><button id="try-ai-test" class="button orange big">✳ Generate AI test artwork</button><button id="to-guide" class="button outline">Review guide ↶</button></div>
+   <div id="test-output" class="test-output"><span class="muted">Your first private test image will appear here.</span></div>
+   <div class="feedback-choices"><button id="test-good" class="button pale" disabled>✓ Feels like my work</button><button id="test-bad" class="button pale" disabled>↶ Needs a new direction</button></div>
+   <label class="field"><span>What did the engine get right or wrong?</span><textarea id="test-feedback" rows="3" maxlength="1000" placeholder="The overall palette feels right, but I would never choose that symmetrical crop..."></textarea></label>
+   <button class="button outline" id="carry-test-feedback">Bring feedback into my recipe ↗</button>
+   <div class="studio-privacy"><b>Not yet publishable.</b> You can test and export private drafts, but this prototype does not create server-hosted artist accounts, production licenses or public engines.</div>
+  </section>
+ </div>
+ <aside class="atelier-sidebar">
+  <div class="sidebar-top"><span class="eyebrow">PRIVATE ENGINE HEALTH</span><span class="status-light" id="curator-mode">AI curator</span></div>
+  <div class="readiness-num" id="readiness">0<span>%</span></div><div class="muted">Creative DNA interview coverage <small>(AI estimate)</small></div><div id="coverage-bars" class="coverage-bars"></div>
+  <div class="divider-line"></div>
+  <div class="eyebrow">WHAT THE AI IS LEARNING</div><div id="insight-list" class="insight-list"><p class="muted">Begin with your original work and your own words.</p></div>
+  <div class="divider-line"></div>
+  <div class="eyebrow">OPEN QUESTIONS</div><div id="gap-list" class="gap-list"><p class="muted">The AI will highlight what's missing.</p></div>
+  <div class="divider-line"></div>
+  <label class="field"><span>Pilot access code</span><input id="curator-code" type="password" autocomplete="off" placeholder="Access code from site owner"></label>
+  <p class="disclaimer">Used for prototype AI requests only, never saved locally. You can preview the flow and build a local draft without it.</p>
+  <button class="button pale" style="width:100%;margin-bottom:8px" id="save-session">Save draft locally</button>
+  <button class="button pale" style="width:100%" id="new-session">New engine draft</button>
+  <div class="disclaimer" style="margin-top:12px">This is an owner-access pilot—not a production private vault. Don't upload commercially sensitive unpublished assets until authenticated storage and explicit retention controls are in place.</div>
+ </aside>
+</div>
+<div class="atelier-bottom">✳ HUMAN CREATIVITY IS THE INPUT. HUMAN CREATIVE JUDGEMENT IS THE STANDARD.</div>
+</main><footer class="footer"><div class="shell footer-row"><div class="logo" style="color:#fff"><i>✳</i>musehouse</div><div class="muted">Private creator pilot · Originals and rights-cleared references only.</div></div></footer>
+<div class="atelier-toast" id="studio-toast" role="status"></div>
+<script src="atelier.js" defer></script></body></html>
