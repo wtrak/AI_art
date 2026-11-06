@@ -38,11 +38,7 @@
   }catch(e){inform("The guide is not valid JSON: "+e.message)}
  });
  $("save-session").addEventListener("click",()=>{gather();saveLocal();inform("Local engine draft saved in this browser.")});
- $("new-session").addEventListener("click",()=>{
-  if(!confirm("Start a new engine? This replaces the current local draft. Export any important guide first."))return;
-  a=fresh();images={};$("a-name").value="";$("a-engine").value="";$("a-medium").value="Art";$("a-intent").value="";$("a-exclusions").value="";$("chat-input").value="";
-  $("test-output").innerHTML="";$("guide-edit-area").hidden=true;goto("identity");inform("New creative engine draft started.");
- });
+ initProfileLibraryUI();
  $("test-good").addEventListener("click",()=>{
   a.insights.push({fact:"Artist approved a test result as visually aligned.",source:"Artist review"});
   a.readiness=Math.min(100,Math.round(a.readiness+5));drawSidebar();saveLocal();inform("Approval recorded locally. More varied tests are still recommended.");
