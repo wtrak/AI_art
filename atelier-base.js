@@ -7,7 +7,7 @@ const fresh=()=>({stage:"identity",artist:"",engine:"",medium:"Art",intent:"",ex
 let a=fresh(),pending=false,images={};
 try{const stored=JSON.parse(localStorage.getItem("musehouse_creator_draft")||"null");if(stored&&typeof stored==="object")a={...fresh(),...stored,lastTest:null};}catch(_){}
 function inform(message){const el=$("studio-toast");el.textContent=message;el.style.display="block";clearTimeout(inform.t);inform.t=setTimeout(()=>el.style.display="none",4200)}
-function saveLocal(){try{localStorage.setItem("musehouse_creator_draft",JSON.stringify({...a,lastTest:null,references:a.references.map(({data,...r})=>r)}))}catch(_){inform("Storage full. Export your private guide.")}}
+function saveLocal(){try{if(typeof saveProfileDraft==="function"){saveProfileDraft()}else{localStorage.setItem("musehouse_creator_draft",JSON.stringify({...a,lastTest:null,references:a.references.map(({data,...r})=>r)}))}}catch(_){inform("Storage full. Export your private guide.")}}
 function gather(){
  a.artist=$("a-name").value.trim();a.engine=$("a-engine").value.trim();a.medium=$("a-medium").value;
  a.intent=$("a-intent").value.trim();a.exclusions=$("a-exclusions").value.trim();saveLocal();
