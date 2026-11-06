@@ -51,8 +51,16 @@ function referenceParts(refs){
 }
 async function modelJSON(task,c,parts,maxOutputTokens){
  const {generateText}=await import("ai");
+ // Direct Anthropic uses the artist owner's Claude Console API balance;
+ // it does not require Vercel AI Gateway billing.
+ let activeModel=MODEL;
+ if(process.env.ANTHROPIC_API_KEY){
+   const {createAnthropic}=await import("@ai-sdk/anthropic");
+   const provider=createAnthropic({apiKey:process.env.ANTHROPIC_API_KEY});
+   activeModel=provider(process.env.CLAUDE_ARTIST_MODEL||"claude-sonnet-5-5");
+ }
  const result=await generateText({
-  model:MODEL,
+  model:activeModel,
   messages:[{role:"system",content:INSTRUCTION+"\n"+task},{role:"user",content:[{type:"text",text:"Artist evidence: "+JSON.stringify(c).slice(0,28000)},...parts]}],
   maxOutputTokens,
   abortSignal:AbortSignal.timeout(75000)
@@ -142,7 +150,7 @@ module.exports=async function handler(req,res){
    response=await modelJSON(COMPILE+"\nARTIST CORRECTION (authoritative): "+feedback+"\nRefine existing guide rather than rewriting it without reason.",c,[],4500);
   }
   if(!response||typeof response!=="object")throw Error("Empty curator answer");
-  return send(res,200,{...response,mode:"ai",persisted:false,model:MODEL});
+  return send(res,200,{...response,mode:"ai",persisted:false,model:process.env.ANTHROPIC_API_KEY?(process.env.CLAUDE_ARTIST_MODEL||"claude-sonnet-5-5"):MODEL,provider:process.env.ANTHROPIC_API_KEY?"anthropic-direct":"gateway"});
  }catch(err){
   const rawMessage=String(err?.message||"");
   const rawCause=String(err?.cause?.message||"");
@@ -154,6 +162,15 @@ module.exports=async function handler(req,res){
       combined.includes("model")&&(/not found|unknown|invalid|does not exist/.test(combined))?"invalid_model":
       err?.name||"unknown_error"
   });
+  if(process.env.ANTHROPIC_API_KEY && (combined.includes("credit balance is too low")||combined.includes("insufficient credits")||combined.includes("insufficient_quota")||combined.includes("credit balance"))){
+    return send(res,402,{code:"ANTHROPIC_CREDITS_REQUIRED",error:"Your linked Claude Console organization has insufficient API credits. Claim your Max plan's monthly API credits in Claude Settings → Billing → API credits, or review your balance in Claude Console. Your artist draft is saved locally."});
+  }
+  if(process.env.ANTHROPIC_API_KEY && (combined.includes("authentication_error")||combined.includes("invalid x-api-key")||combined.includes("invalid api key")||combined.includes("invalid api_key"))){
+    return send(res,401,{code:"ANTHROPIC_API_KEY_INVALID",error:"Anthropic rejected the ANTHROPIC_API_KEY configured in Vercel. Generate a valid API key in your linked Claude Console organization and update the server environment variable."});
+  }
+  if(process.env.ANTHROPIC_API_KEY && (combined.includes("model_not_found")||combined.includes("not_found_error")||combined.includes("model does not exist"))){
+    return send(res,422,{code:"ANTHROPIC_MODEL_UNAVAILABLE",error:"The configured Claude model isn't available for this API key. Check CLAUDE_ARTIST_MODEL in Vercel against the Claude Console model catalog."});
+  }
   if(combined.includes("valid credit card")||combined.includes("customer_verification_required")||combined.includes("payment method")){
     return send(res,402,{code:"GATEWAY_PAYMENT_VERIFICATION_REQUIRED",error:"Vercel AI Gateway needs a valid payment method on file before it will process AI interviews—even when free credits are available. Open your Vercel team's AI Gateway billing page, add or verify a card, then retry. Your artist draft is still saved in this browser."});
   }
