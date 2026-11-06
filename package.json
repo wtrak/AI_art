@@ -8,6 +8,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "ai": "^6.0.0"
+    "ai": "^6.0.0",
+    "@ai-sdk/anthropic": "^3.0.138"
   }
 }
