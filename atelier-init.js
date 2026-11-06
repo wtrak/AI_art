@@ -6,6 +6,18 @@
  $("to-references").addEventListener("click",()=>{gather();goto("references")});
  $("reference-input").addEventListener("change",async e=>{await addReferences(e.target.files);e.target.value=""});
  $("analyze-refs").addEventListener("click",analyzeWork);
+ $("check-curator").addEventListener("click",async()=>{
+  const button=$("check-curator"),status=$("connection-status");
+  button.disabled=true;status.textContent="Checking your AI connection with one small request…";
+  try{
+    const result=await curator("check");
+    status.textContent="✓ Connected to "+(result.provider==="anthropic-direct"?"Claude directly":"Vercel AI Gateway")+" using "+(result.model||"the selected model")+".";
+    inform("AI connection works. You can continue the interview.");
+  }catch(error){
+    status.textContent=error.message;
+    inform("Connection test failed. The detailed error is now in your Vercel logs.");
+  }finally{button.disabled=false}
+ });
  $("manual-interview").addEventListener("click",startInterview);
  $("chat-form").addEventListener("submit",e=>{e.preventDefault();answerQuestion()});
  $("compile-guide").addEventListener("click",assembleGuide);
