@@ -58,14 +58,25 @@ The `PROTOTYPE_ACCESS_CODE` remains in place as a simple demo protection. **Do n
 Claude handles multimodal reference analysis, clarifying questions, interview and guide compilation. **It does not generate the final artwork.** Image tests still use the separate Vercel AI Gateway route and may require Gateway billing, or another image-generation service to be connected in future.
 
 
-## AI Gateway free-tier model selection — November 2026
+## Current AI curator configuration
 
-Vercel's AI Gateway may respond with HTTP 403 `RestrictedModelsError` even after adding a valid payment card and receiving the $5 monthly free-credit allowance. This is a **model access tier restriction**, not a missing card. The prior curator model `openai/gpt-5.4-mini` produced this exact error.
+Musehouse Artist Atelier uses **GPT-4.1 Mini** through the owner's paid Vercel AI Gateway balance by default (`ARTIST_INTERVIEW_MODEL=openai/gpt-4.1-mini`), enabling text, image and PDF analysis. The previous free-only text curator and its image-analysis block are no longer active. The optional direct Claude API integration remains supported by setting `ANTHROPIC_API_KEY` in Vercel. The interactive art-image testing engine is configured separately by `GATEWAY_IMAGE_MODEL`.
 
-The default `ARTIST_INTERVIEW_MODEL` is currently `reflection/beam-free`, a text-only promotional model, with `providerOptions.gateway.has=['free']` to prevent automatic paid fallback. Free-image analysis is currently unavailable because Vercel ended the earlier Ling vision free offering. Uploads of images/PDFs return a clear error on this free route; text interviews remain available if the free provider accepts the request. The default is for **nonconfidential pilot experiments only**. The model and its inference provider may have different data handling from premium providers; do not upload valuable unpublished works or private artist techniques until provider terms, data handling, and creator consent are reviewed.
+## Multiple artists and engines during the pilot
 
-When the project has purchased AI Gateway credits or a direct provider key, you can override `ARTIST_INTERVIEW_MODEL` to a higher-quality model such as `openai/gpt-5.4-mini`, or set `ANTHROPIC_API_KEY` for direct Claude artist interviewing. For now, the user should not need to buy paid AI Gateway credits to test the curator's free-model path. Availability and restrictions can change.
+Artist Atelier now provides a **Profile Library**:
 
-Model access can remain blocked until Gateway account credit-tier activation; the $5 promotional balance is not equivalent to purchased AI Gateway credits. The **Check AI connection** button sends only the fixed prompt `Reply with OK.` and no art or interview data. Failures are logged with a short diagnostic ID, upstream status, sanitized error message, selected model and action. If an upstream provider rejects the model due to free-tier restrictions, Musehouse now returns `GATEWAY_MODEL_RESTRICTED` instead of an unhelpful generic error.
+- `+ New artist / engine`: make another independent draft without overwriting your existing one.
+- Open an artist/engine card to continue its interview, guide, and creative decisions.
+- Duplicate to build multiple engines for one artist, reset **only** the current draft, or delete individual local drafts after confirmation.
+- Export a profile JSON (artist details, interview, analysis, compiled guide and notes) to back it up or deliver it confidentially to the project owner. Import JSON creates another independent profile.
+- Earlier single-draft `musehouse_creator_draft` data is migrated to the profile library on first visit. The old localStorage record is left intact as a backup.
+- Reference images/PDF bytes are only kept in **browser memory**; they do not persist through a page reload and are not embedded in export JSON. Re-uploading a file with the same name reattaches it to the original annotation.
 
-The **artwork generation and artist image-test** model (`GATEWAY_IMAGE_MODEL`) is separately configured and may still require paid credits; free text/vision interviewing does not guarantee free image generation.
+**Sharing an invite link is possible now:** https://musehouse-ai-art.vercel.app/atelier.html . Each tester independently builds their own drafts using browser-local storage. However, the prototype has **no creator signup, cloud-synced profiles, private server-side artist vault or administrator view of other people's drafts**. Those require an authenticated database-backed onboarding system. Ask testers to export their private profile JSON and send it directly to the owner for review.
+
+Do not publicly share the owner's `PROTOTYPE_ACCESS_CODE`. Any person with that code could invoke API calls against the owner's prepaid AI Gateway budget, and the prototype lacks durable per-user rate limits and billing quotas. Invite trusted pilot artists only until real accounts, permissions and server-side credit metering exist.
+
+## Production requirements before broader invitations
+
+Implement individual artist authentication; private, access-controlled, encrypted reference and recipe storage; versioned engine IDs; explicit creator opt-in and licensing terms; quotas and spend tracking on the server; secure exports; moderation; creator analytics; an owner approval workflow; and deletion/retention controls. Avoid claiming the existing browser-local data is a protected, centrally hosted creator account.
