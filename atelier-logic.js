@@ -105,18 +105,26 @@ async function imageData(f){
 }
 async function addReferences(files){
  for(const f of Array.from(files)){
-  if(a.references.length>=6){inform("Six reference files maximum per engine.");break}
-  let kind=f.type.startsWith("image/")?"image":f.type==="application/pdf"?"pdf":f.type==="text/plain"?"text":"";
+  const kind=f.type.startsWith("image/")?"image":f.type==="application/pdf"?"pdf":f.type==="text/plain"?"text":"";
   if(!kind){inform("Unsupported file: "+f.name);continue}
+  const prior=a.references.find(r=>r.name===f.name&&r.kind===kind&&(!images[r.id]||kind==="text"));
+  if(!prior&&a.references.length>=6){inform("Six reference files maximum per engine.");break}
   if(f.size>6*1024*1024){inform("Please reduce the size of "+f.name);continue}
   try{
    let data="",body="";
    if(kind==="image")data=await imageData(f);
    else if(kind==="pdf"){if(f.size>900000){inform("PDF references must be under 900 KB in this pilot.");continue}data=await fileData(f)}
    else body=(await f.text()).slice(0,4500);
-   const id="ref_"+Date.now()+"_"+Math.floor(Math.random()*100000);
-   a.references.push({id,name:f.name,kind,mime:f.type,note:"",text:body});
-   if(data)images[id]=data;
+   if(prior){
+     if(data)images[prior.id]=data;
+     if(kind==="text")prior.text=body;
+     prior.mime=f.type;
+     inform("Reattached "+f.name+" to its original reference notes.");
+   }else{
+     const id="ref_"+Date.now()+"_"+Math.floor(Math.random()*100000);
+     a.references.push({id,name:f.name,kind,mime:f.type,note:"",text:body});
+     if(data)images[id]=data;
+   }
   }catch(err){inform(err.message)}
  }
  renderReferences();saveLocal();
