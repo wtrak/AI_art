@@ -133,9 +133,22 @@ module.exports=async function handler(req,res){
   body=typeof req.body==="string"?JSON.parse(req.body):req.body||{};
  }catch(_){return send(res,400,{error:"Invalid JSON request."})}
  const action=text(body.action,30),c=contextOf(body.context);
- if(!["analyze","interview","compile","refine","test"].includes(action))return send(res,400,{error:"Unknown interview action."});
- if(!c.artist||!c.engine)return send(res,422,{error:"Provide an artist name and creative engine name."});
+ if(!["check","analyze","interview","compile","refine","test"].includes(action))return send(res,400,{error:"Unknown interview action."});
+ if(action!=="check"&&(!c.artist||!c.engine))return send(res,422,{error:"Provide an artist name and creative engine name."});
  try{
+  if(action==="check"){
+    const {generateText}=await import("ai");
+    let model=MODEL;
+    let provider="vercel-gateway";
+    if(process.env.ANTHROPIC_API_KEY){
+      const {createAnthropic}=await import("@ai-sdk/anthropic");
+      model=createAnthropic({apiKey:process.env.ANTHROPIC_API_KEY})(process.env.CLAUDE_ARTIST_MODEL||"claude-sonnet-5-5");
+      provider="anthropic-direct";
+    }
+    const result=await generateText({model,prompt:"Reply with OK.",maxOutputTokens:32,abortSignal:AbortSignal.timeout(25000)});
+    if(!result.text?.trim())throw Object.assign(new Error("The model returned an empty text response."),{name:"ModelEmptyResponse"});
+    return send(res,200,{ready:true,provider,model:provider==="anthropic-direct"?(process.env.CLAUDE_ARTIST_MODEL||"claude-sonnet-5-5"):MODEL,reply:result.text.trim().slice(0,40)});
+  }
   if(action==="test"){const result=await test(c,body);return send(res,result.status,result.data)}
   let response;
   if(action==="analyze"){
@@ -155,12 +168,17 @@ module.exports=async function handler(req,res){
   const rawMessage=String(err?.message||"");
   const rawCause=String(err?.cause?.message||"");
   const combined=(rawMessage+" "+rawCause).toLowerCase();
-  // Return actionable categories, never secrets or upstream request payloads.
-  console.error("Musehouse interview error",{
-    category:combined.includes("valid credit card")||combined.includes("customer_verification_required")?"gateway_billing_unverified":
-      combined.includes("insufficient credits")||combined.includes("insufficient_quota")||combined.includes("credit balance")?"gateway_credits":
-      combined.includes("model")&&(/not found|unknown|invalid|does not exist/.test(combined))?"invalid_model":
-      err?.name||"unknown_error"
+  // Log the upstream diagnostic, never request messages, uploaded art, prompts or API keys.
+  const diagnosticId=crypto.randomUUID().slice(0,8);
+  const safeError=(v)=>String(v||"").split("\\n")[0].slice(0,600)
+    .replace(/(sk-(?:ant-)?[A-Za-z0-9_.-]+)/g,"[secret redacted]")
+    .replace(/(Bearer\\s+)[A-Za-z0-9_.-]+/gi,"$1[redacted]");
+  console.error("Musehouse AI diagnostic",{
+    diagnosticId,action,model:process.env.ANTHROPIC_API_KEY?"anthropic-direct":MODEL,
+    name:String(err?.name||"UnknownError"),status:err?.statusCode||err?.status||err?.cause?.statusCode||null,
+    message:safeError(rawMessage),cause:safeError(rawCause),
+    gatewayCode:typeof err?.data?.code==="string"?err.data.code.slice(0,80):null,
+    gatewayMessage:safeError(typeof err?.data?.message==="string"?err.data.message:"")
   });
   if(process.env.ANTHROPIC_API_KEY && (combined.includes("credit balance is too low")||combined.includes("insufficient credits")||combined.includes("insufficient_quota")||combined.includes("credit balance"))){
     return send(res,402,{code:"ANTHROPIC_CREDITS_REQUIRED",error:"Your linked Claude Console organization has insufficient API credits. Claim your Max plan's monthly API credits in Claude Settings → Billing → API credits, or review your balance in Claude Console. Your artist draft is saved locally."});
@@ -186,6 +204,9 @@ module.exports=async function handler(req,res){
   if(err?.name==="TimeoutError"||err?.name==="AbortError"){
     return send(res,504,{code:"GATEWAY_TIMEOUT",error:"The AI curator timed out. Your work is saved locally; please try again."});
   }
-  return send(res,502,{code:"CURATOR_UPSTREAM_ERROR",error:"The AI curator could not complete this request. Check the Vercel runtime logs for the underlying AI Gateway error; your artist draft is still saved locally."});
+  if(err?.name==="GatewayInternalServerError"){
+    return send(res,502,{code:"GATEWAY_INTERNAL_ERROR",diagnosticId,error:"Vercel AI Gateway returned an internal error. The server recorded a detailed diagnostic ("+diagnosticId+"). Your artist draft is safe; use Check AI connection to diagnose the gateway without re-uploading artwork."});
+  }
+  return send(res,502,{code:"CURATOR_UPSTREAM_ERROR",diagnosticId,error:"The AI curator failed ("+diagnosticId+"). The detailed server error is now recorded in Vercel runtime logs. Your artist draft is still saved locally."});
  }
 };
