@@ -1,8 +1,8 @@
 "use strict";
 const crypto=require("node:crypto");
-// Ling VL is a free-tier-eligible multimodal model; override through ARTIST_INTERVIEW_MODEL after paid activation.
-const MODEL=process.env.ARTIST_INTERVIEW_MODEL||"inclusionai/ling-3.0-flash-vl";
-const FREE_GATEWAY_MODEL="inclusionai/ling-3.0-flash-vl";
+// Use a free-provider-only text model for interview pilots; image analysis requires a vision model.
+const MODEL=process.env.ARTIST_INTERVIEW_MODEL||"reflection/beam";
+const FREE_GATEWAY_MODEL="reflection/beam";
 const freeProviderOptions=()=>!process.env.ANTHROPIC_API_KEY && MODEL===FREE_GATEWAY_MODEL ? {gateway:{has:["free"]}} : undefined;
 const IMAGE_MODEL=process.env.GATEWAY_IMAGE_MODEL||"openai/gpt-image-2.5-flare";
 const text=(v,n=1000)=>typeof v==="string"?v.slice(0,n):"";
@@ -152,6 +152,10 @@ module.exports=async function handler(req,res){
     const result=await generateText({model,providerOptions:freeProviderOptions(),prompt:"Reply with OK.",maxOutputTokens:32,abortSignal:AbortSignal.timeout(25000)});
     if(!result.text?.trim())throw Object.assign(new Error("The model returned an empty text response."),{name:"ModelEmptyResponse"});
     return send(res,200,{ready:true,provider,model:provider==="anthropic-direct"?(process.env.CLAUDE_ARTIST_MODEL||"claude-sonnet-5-5"):MODEL,reply:result.text.trim().slice(0,40)});
+  }
+  if(action==="analyze" && !process.env.ANTHROPIC_API_KEY && MODEL===FREE_GATEWAY_MODEL && Array.isArray(body.references) && body.references.some(r=>r.kind!=="text")){
+    return send(res,422,{code:"VISION_MODEL_REQUIRED",
+      error:"The free curator model supports text only; it cannot inspect uploaded images or PDFs. For now, describe your work in the artist statement or upload text notes to begin the AI interview. Image and PDF analysis needs a vision-enabled API model with paid credits, or a direct Claude API key."});
   }
   if(action==="test"){const result=await test(c,body);return send(res,result.status,result.data)}
   let response;
