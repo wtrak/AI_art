@@ -42,3 +42,17 @@ Persistent authentication and creator accounts, an encrypted private-style vault
 ## Design intent
 
 A joyful shared creative space, closer to an art club than a professional-services listing site. The product centers **artist-made private engines as products**. Users never book the artist, submit a commission to them, or wait on manual approval.
+
+
+## Direct Claude API for artist onboarding (Claude Max subscribers)
+
+Musehouse can run its private **Artist Atelier AI curator** directly on the Claude API without using Vercel AI Gateway. Use your Claude Max monthly API credit allowance where eligible:
+
+1. On https://claude.ai navigate to **Settings > Billing > API credits > Link organization** and link a Claude Console organization. Anthropic states eligible Max plans include $100 USD/month of Claude API credits, usually claimable after 7 days on Max; the credits refresh each billing cycle, don't roll over, and are separate from chat usage. Anthropic may change these policies; confirm in your Claude billing UI.
+2. Create a key in the linked organization's https://platform.claude.com/settings/keys . Do **not** paste the key into chat or GitHub.
+3. Open the Vercel project's **Settings > Environment Variables**. Add `ANTHROPIC_API_KEY` as an **encrypted** server environment variable for Production (and Preview if needed). Optionally set `CLAUDE_ARTIST_MODEL` (default `claude-sonnet-5-5`). Deploy the new environment configuration.
+4. Return to https://musehouse-ai-art.vercel.app/atelier.html . The artist AI curator automatically selects **direct Anthropic** whenever `ANTHROPIC_API_KEY` exists; otherwise it falls back to Vercel AI Gateway.
+
+The `PROTOTYPE_ACCESS_CODE` remains in place as a simple demo protection. **Do not expose the key, access code or private creative guides in the public GitHub repo.** The prototype lacks production-grade per-account limits and quotas. Configure spending limits in Claude Console, leave auto-reload off if you want to prevent additional paid charges, and use a separate production-authentication system before inviting actual creators.
+
+Claude handles multimodal reference analysis, clarifying questions, interview and guide compilation. **It does not generate the final artwork.** Image tests still use the separate Vercel AI Gateway route and may require Gateway billing, or another image-generation service to be connected in future.
