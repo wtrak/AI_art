@@ -1,6 +1,6 @@
 "use strict";
 const crypto=require("node:crypto");
-const MODEL=process.env.ARTIST_INTERVIEW_MODEL||"openai/gpt-6-luna";
+const MODEL=process.env.ARTIST_INTERVIEW_MODEL||"openai/gpt-5.4-mini";
 const IMAGE_MODEL=process.env.GATEWAY_IMAGE_MODEL||"openai/gpt-image-2.5-flare";
 const text=(v,n=1000)=>typeof v==="string"?v.slice(0,n):"";
 const send=(res,s,v)=>res.status(s).json(v);
@@ -144,7 +144,31 @@ module.exports=async function handler(req,res){
   if(!response||typeof response!=="object")throw Error("Empty curator answer");
   return send(res,200,{...response,mode:"ai",persisted:false,model:MODEL});
  }catch(err){
-  console.error("Musehouse interview error",err?.name,err?.message);
-  return send(res,502,{error:err?.name==="TimeoutError"?"The AI curator timed out. You can try again.":"The AI curator could not complete this step. Check AI Gateway credits, then retry."});
+  const rawMessage=String(err?.message||"");
+  const rawCause=String(err?.cause?.message||"");
+  const combined=(rawMessage+" "+rawCause).toLowerCase();
+  // Return actionable categories, never secrets or upstream request payloads.
+  console.error("Musehouse interview error",{
+    category:combined.includes("valid credit card")||combined.includes("customer_verification_required")?"gateway_billing_unverified":
+      combined.includes("insufficient credits")||combined.includes("insufficient_quota")||combined.includes("credit balance")?"gateway_credits":
+      combined.includes("model")&&(/not found|unknown|invalid|does not exist/.test(combined))?"invalid_model":
+      err?.name||"unknown_error"
+  });
+  if(combined.includes("valid credit card")||combined.includes("customer_verification_required")||combined.includes("payment method")){
+    return send(res,402,{code:"GATEWAY_PAYMENT_VERIFICATION_REQUIRED",error:"Vercel AI Gateway needs a valid payment method on file before it will process AI interviews—even when free credits are available. Open your Vercel team's AI Gateway billing page, add or verify a card, then retry. Your artist draft is still saved in this browser."});
+  }
+  if(combined.includes("insufficient credits")||combined.includes("insufficient_quota")||combined.includes("credit balance")){
+    return send(res,402,{code:"GATEWAY_CREDITS_EXHAUSTED",error:"Your Vercel AI Gateway has insufficient available credits. Review your credit balance and billing settings, then retry. Your artist draft is safe."});
+  }
+  if(combined.includes("model")&&(/not found|unknown|invalid|does not exist/.test(combined))){
+    return send(res,502,{code:"GATEWAY_MODEL_UNAVAILABLE",error:"The selected AI curator model is not available to this Vercel project. The site owner should review ARTIST_INTERVIEW_MODEL and available AI Gateway models."});
+  }
+  if(combined.includes("rate limit")||err?.statusCode===429){
+    return send(res,429,{code:"GATEWAY_RATE_LIMIT",error:"The AI Gateway is temporarily rate-limited. Try again later; your artist draft has been saved."});
+  }
+  if(err?.name==="TimeoutError"||err?.name==="AbortError"){
+    return send(res,504,{code:"GATEWAY_TIMEOUT",error:"The AI curator timed out. Your work is saved locally; please try again."});
+  }
+  return send(res,502,{code:"CURATOR_UPSTREAM_ERROR",error:"The AI curator could not complete this request. Check the Vercel runtime logs for the underlying AI Gateway error; your artist draft is still saved locally."});
  }
 };
