@@ -1,7 +1,9 @@
 "use strict";
 const crypto=require("node:crypto");
 // Ling VL is a free-tier-eligible multimodal model; override through ARTIST_INTERVIEW_MODEL after paid activation.
-const MODEL=process.env.ARTIST_INTERVIEW_MODEL||"inclusionai/ling-3.0-flash-vl-free";
+const MODEL=process.env.ARTIST_INTERVIEW_MODEL||"inclusionai/ling-3.0-flash-vl";
+const FREE_GATEWAY_MODEL="inclusionai/ling-3.0-flash-vl";
+const freeProviderOptions=()=>!process.env.ANTHROPIC_API_KEY && MODEL===FREE_GATEWAY_MODEL ? {gateway:{has:["free"]}} : undefined;
 const IMAGE_MODEL=process.env.GATEWAY_IMAGE_MODEL||"openai/gpt-image-2.5-flare";
 const text=(v,n=1000)=>typeof v==="string"?v.slice(0,n):"";
 const send=(res,s,v)=>res.status(s).json(v);
@@ -62,6 +64,7 @@ async function modelJSON(task,c,parts,maxOutputTokens){
  }
  const result=await generateText({
   model:activeModel,
+  providerOptions:freeProviderOptions(),
   messages:[{role:"system",content:INSTRUCTION+"\n"+task},{role:"user",content:[{type:"text",text:"Artist evidence: "+JSON.stringify(c).slice(0,28000)},...parts]}],
   maxOutputTokens,
   abortSignal:AbortSignal.timeout(75000)
@@ -146,7 +149,7 @@ module.exports=async function handler(req,res){
       model=createAnthropic({apiKey:process.env.ANTHROPIC_API_KEY})(process.env.CLAUDE_ARTIST_MODEL||"claude-sonnet-5-5");
       provider="anthropic-direct";
     }
-    const result=await generateText({model,prompt:"Reply with OK.",maxOutputTokens:32,abortSignal:AbortSignal.timeout(25000)});
+    const result=await generateText({model,providerOptions:freeProviderOptions(),prompt:"Reply with OK.",maxOutputTokens:32,abortSignal:AbortSignal.timeout(25000)});
     if(!result.text?.trim())throw Object.assign(new Error("The model returned an empty text response."),{name:"ModelEmptyResponse"});
     return send(res,200,{ready:true,provider,model:provider==="anthropic-direct"?(process.env.CLAUDE_ARTIST_MODEL||"claude-sonnet-5-5"):MODEL,reply:result.text.trim().slice(0,40)});
   }
@@ -189,6 +192,9 @@ module.exports=async function handler(req,res){
   }
   if(process.env.ANTHROPIC_API_KEY && (combined.includes("model_not_found")||combined.includes("not_found_error")||combined.includes("model does not exist"))){
     return send(res,422,{code:"ANTHROPIC_MODEL_UNAVAILABLE",error:"The configured Claude model isn't available for this API key. Check CLAUDE_ARTIST_MODEL in Vercel against the Claude Console model catalog."});
+  }
+  if(combined.includes("no providers available") || combined.includes("no_providers_available") || (combined.includes("free") && combined.includes("provider"))){
+    return send(res,503,{code:"FREE_PROVIDER_UNAVAILABLE",diagnosticId,error:"No free AI provider is currently available for the selected curator model. Musehouse will not automatically fall back to billable usage; you can choose a paid model after explicitly enabling paid Gateway credits."});
   }
   if(combined.includes("free tier users do not have access") || combined.includes("restrictedmodelserror") || combined.includes("upgrade to paid credits")){
     return send(res,403,{code:"GATEWAY_MODEL_RESTRICTED",diagnosticId,
