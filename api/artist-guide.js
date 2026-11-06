@@ -1,8 +1,8 @@
 "use strict";
 const crypto=require("node:crypto");
 // Use a free-provider-only text model for interview pilots; image analysis requires a vision model.
-const MODEL=process.env.ARTIST_INTERVIEW_MODEL||"reflection/beam";
-const FREE_GATEWAY_MODEL="reflection/beam";
+const MODEL=process.env.ARTIST_INTERVIEW_MODEL||"reflection/beam-free";
+const FREE_GATEWAY_MODEL="reflection/beam-free";
 const freeProviderOptions=()=>!process.env.ANTHROPIC_API_KEY && MODEL===FREE_GATEWAY_MODEL ? {gateway:{has:["free"]}} : undefined;
 const IMAGE_MODEL=process.env.GATEWAY_IMAGE_MODEL||"openai/gpt-image-2.5-flare";
 const text=(v,n=1000)=>typeof v==="string"?v.slice(0,n):"";
