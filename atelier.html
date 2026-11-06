@@ -7,6 +7,25 @@
 <div id="curator-billing-alert" hidden role="alert" class="notice" style="padding:16px;margin:20px 0;line-height:1.7;border:2px solid #d78f62"><strong>AI interviews are paused until Vercel verifies a payment method.</strong> Vercel requires a valid card even to unlock eligible free AI Gateway credits. <a href="https://vercel.com/taylors-projects-41e735e8/~/ai" target="_blank" rel="noopener noreferrer" style="font-weight:800;text-decoration:underline">Open your team's AI Gateway billing settings ↗</a>. Your current artist draft remains saved in this browser.</div>
 
 <section class="atelier-hero"><div><div class="eyebrow">THE CREATOR'S ATELIER / PRIVATE PILOT</div><h1 class="serif">Bottle up the way<br><em>you see the world.</em></h1><p>Upload the work you're proud of. Tell our AI curator how you think. Together, turn the decisions behind your art into a reusable creative engine—without handing your customers the recipe.</p></div><div class="art-symbol" aria-hidden="true">✳<span>HUMAN<br>MAGIC,<br>PRESERVED.</span></div></section>
+<section class="atelier-profile-library" aria-labelledby="library-heading">
+  <div class="atelier-library-header">
+    <div><div class="eyebrow">YOUR CREATIVE WORKSPACES</div>
+      <h2 id="library-heading" class="serif">Artist profiles & engines <span id="profile-count" class="atelier-library-count"></span></h2>
+      <p class="muted">Build several artist profiles or multiple engines for the same artist. Your drafts are separate and saved in this browser.</p>
+    </div>
+    <div class="atelier-library-actions">
+      <button id="add-profile" type="button" class="button orange">＋ New artist / engine</button>
+      <label class="button pale" for="import-profile" style="cursor:pointer">↑ Import draft</label>
+      <input type="file" id="import-profile" accept=".json,application/json" hidden>
+    </div>
+  </div>
+  <div id="profile-list" class="atelier-profile-list" aria-live="polite"></div>
+  <div class="atelier-share-bar">
+    <div><strong>Invite another creator to test Musehouse</strong><span>They'll have their own independent drafts on their device. Their work isn't automatically shared with you.</span></div>
+    <button type="button" class="button outline small" id="copy-studio-link">Copy studio link</button>
+  </div>
+  <p class="atelier-library-caution"><strong>Private pilot:</strong> This is a browser-local profile library, not cloud accounts. Each tester needs the pilot access code for AI calls; sharing it gives access to your prepaid AI budget. Ask testers to export their finished profile JSON and send it to you privately. Reference images themselves are not included in the export.</p>
+</section>
 <div class="atelier-stepper" id="steps" aria-label="Onboarding stages"></div>
 <div class="atelier-workarea">
  <div class="atelier-content">
@@ -67,7 +86,8 @@
   <div id="connection-status" aria-live="polite" role="status" class="disclaimer" style="margin-top:9px"></div>
   <p class="disclaimer">Used for prototype AI requests only, never saved locally. You can preview the flow and build a local draft without it.</p>
   <button class="button pale" style="width:100%;margin-bottom:8px" id="save-session">Save draft locally</button>
-  <button class="button pale" style="width:100%" id="new-session">New engine draft</button>
+  <button class="button pale" style="width:100%" id="new-session">＋ New profile / engine</button>
+  <button class="button pale" style="width:100%;margin-top:8px" id="reset-profile">Reset current draft</button>
   <div class="disclaimer" style="margin-top:12px">This is an owner-access pilot—not a production private vault. Don't upload commercially sensitive unpublished assets until authenticated storage and explicit retention controls are in place.</div>
  </aside>
 </div>
