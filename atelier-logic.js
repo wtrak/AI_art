@@ -8,7 +8,13 @@ async function curator(action,more={}){
  },...more};
  const response=await fetch("/api/artist-guide",{method:"POST",headers:{"Content-Type":"application/json","x-prototype-code":access},body:JSON.stringify(payload)});
  const result=await response.json().catch(()=>({error:"The curator returned an unreadable response."}));
- if(!response.ok)throw Error(result.error||"The AI curator is unavailable.");
+ if(!response.ok){
+   const alert=document.getElementById("curator-billing-alert");
+   if(alert && result.code==="GATEWAY_PAYMENT_VERIFICATION_REQUIRED")alert.hidden=false;
+   throw Error(result.error||"The AI curator is unavailable.");
+ }
+ const alert=document.getElementById("curator-billing-alert");
+ if(alert)alert.hidden=true;
  return result;
 }
 async function analyzeWork(){
