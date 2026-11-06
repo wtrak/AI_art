@@ -1,6 +1,7 @@
 "use strict";
 const crypto=require("node:crypto");
-const MODEL=process.env.ARTIST_INTERVIEW_MODEL||"openai/gpt-5.4-mini";
+// Ling VL is a free-tier-eligible multimodal model; override through ARTIST_INTERVIEW_MODEL after paid activation.
+const MODEL=process.env.ARTIST_INTERVIEW_MODEL||"inclusionai/ling-3.0-flash-vl-free";
 const IMAGE_MODEL=process.env.GATEWAY_IMAGE_MODEL||"openai/gpt-image-2.5-flare";
 const text=(v,n=1000)=>typeof v==="string"?v.slice(0,n):"";
 const send=(res,s,v)=>res.status(s).json(v);
@@ -188,6 +189,10 @@ module.exports=async function handler(req,res){
   }
   if(process.env.ANTHROPIC_API_KEY && (combined.includes("model_not_found")||combined.includes("not_found_error")||combined.includes("model does not exist"))){
     return send(res,422,{code:"ANTHROPIC_MODEL_UNAVAILABLE",error:"The configured Claude model isn't available for this API key. Check CLAUDE_ARTIST_MODEL in Vercel against the Claude Console model catalog."});
+  }
+  if(combined.includes("free tier users do not have access") || combined.includes("restrictedmodelserror") || combined.includes("upgrade to paid credits")){
+    return send(res,403,{code:"GATEWAY_MODEL_RESTRICTED",diagnosticId,
+      error:"The Vercel AI Gateway free tier does not permit this model. Musehouse is configured to use a free-tier-compatible curator by default; check that ARTIST_INTERVIEW_MODEL is not set to a paid-only model in Vercel's environment variables. A card alone does not enable restricted models."});
   }
   if(combined.includes("valid credit card")||combined.includes("customer_verification_required")||combined.includes("payment method")){
     return send(res,402,{code:"GATEWAY_PAYMENT_VERIFICATION_REQUIRED",error:"Vercel AI Gateway needs a valid payment method on file before it will process AI interviews—even when free credits are available. Open your Vercel team's AI Gateway billing page, add or verify a card, then retry. Your artist draft is still saved in this browser."});
