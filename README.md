@@ -56,3 +56,16 @@ Musehouse can run its private **Artist Atelier AI curator** directly on the Clau
 The `PROTOTYPE_ACCESS_CODE` remains in place as a simple demo protection. **Do not expose the key, access code or private creative guides in the public GitHub repo.** The prototype lacks production-grade per-account limits and quotas. Configure spending limits in Claude Console, leave auto-reload off if you want to prevent additional paid charges, and use a separate production-authentication system before inviting actual creators.
 
 Claude handles multimodal reference analysis, clarifying questions, interview and guide compilation. **It does not generate the final artwork.** Image tests still use the separate Vercel AI Gateway route and may require Gateway billing, or another image-generation service to be connected in future.
+
+
+## AI Gateway free-tier model selection — November 2026
+
+Vercel's AI Gateway may respond with HTTP 403 `RestrictedModelsError` even after adding a valid payment card and receiving the $5 monthly free-credit allowance. This is a **model access tier restriction**, not a missing card. The prior curator model `openai/gpt-5.4-mini` produced this exact error.
+
+The default `ARTIST_INTERVIEW_MODEL` is now `inclusionai/ling-3.0-flash-vl-free`, which Vercel lists as a free multimodal text-and-image input model. The default is for **nonconfidential pilot experiments only**. The model and its inference provider may have different data handling from premium providers; do not upload valuable unpublished works or private artist techniques until provider terms, data handling, and creator consent are reviewed.
+
+When the project has purchased AI Gateway credits or a direct provider key, you can override `ARTIST_INTERVIEW_MODEL` to a higher-quality model such as `openai/gpt-5.4-mini`, or set `ANTHROPIC_API_KEY` for direct Claude artist interviewing. For now, the user should not need to buy paid AI Gateway credits to test the curator's free-model path. Availability and restrictions can change.
+
+The **Check AI connection** button sends only the fixed prompt `Reply with OK.` and no art or interview data. Failures are logged with a short diagnostic ID, upstream status, sanitized error message, selected model and action. If an upstream provider rejects the model due to free-tier restrictions, Musehouse now returns `GATEWAY_MODEL_RESTRICTED` instead of an unhelpful generic error.
+
+The **artwork generation and artist image-test** model (`GATEWAY_IMAGE_MODEL`) is separately configured and may still require paid credits; free text/vision interviewing does not guarantee free image generation.
