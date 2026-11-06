@@ -1,0 +1,44 @@
+
+/* Multiple profile workspaces — editorial, creator-first library */
+.atelier-profile-library{padding:28px;margin-bottom:34px;border:1px solid #d5c9b6;border-radius:12px;background:#fffaf0;box-shadow:0 8px 30px rgba(45,39,30,.045)}
+.atelier-library-header{display:flex;justify-content:space-between;align-items:center;gap:22px;margin-bottom:21px}
+.atelier-library-header h2{margin:7px 0 6px;font:650 33px/1.16 "Fraunces",Georgia,serif;letter-spacing:-.046em}
+.atelier-library-header p{margin:0;font-size:13px;line-height:1.6;max-width:650px}
+.atelier-library-count{font-family:"DM Sans",sans-serif;font-weight:800;letter-spacing:0;font-size:11px;border-radius:20px;border:1px solid #d1bfb2;background:#f6eae1;padding:5px 9px;vertical-align:middle;white-space:nowrap}
+.atelier-library-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.atelier-profile-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.atelier-library-card{border:1px solid #ded2c1;border-radius:9px;background:#fff;padding:17px 17px 13px;transition:box-shadow .2s,border-color .2s;min-width:0}
+.atelier-library-card.selected{border:2px solid #e47752;padding:16px 16px 12px;box-shadow:0 4px 20px #d4815b14;background:#fffdf7}
+.atelier-library-card:hover{box-shadow:0 8px 18px #41302410}
+.atelier-library-card-head{display:flex;gap:10px;align-items:center;min-height:66px}
+.atelier-artist-monogram{background:#e9d7e7;width:44px;height:48px;border-radius:8px;display:grid;place-items:center;font:700 27px "Fraunces",Georgia,serif;color:#5f4860;flex-shrink:0}
+.atelier-profile-artist{font-size:10px;letter-spacing:.13em;font-weight:900;text-transform:uppercase;color:#9f6853;margin-bottom:4px}
+.atelier-library-card h3{font:650 22px/1.12 "Fraunces",Georgia,serif;margin:0;overflow-wrap:anywhere}
+.atelier-profile-tagline{font-size:11px;color:#7e756b;margin:12px 0 14px;min-height:16px}
+.atelier-profile-actions{display:flex;gap:7px;align-items:center;border-top:1px solid #ece5dc;padding-top:12px}
+.atelier-profile-actions .button{margin-right:auto;font-size:11px;padding:8px 12px}
+.atelier-icon-action{width:32px;height:32px;border:1px solid #dfd7cd;background:#fff;border-radius:7px;font-size:17px;color:#665f56}
+.atelier-icon-action:hover{background:#f4eddf}
+.atelier-icon-action.destructive{color:#ac563c}
+.atelier-share-bar{margin-top:18px;border:1px solid #d8cddd;background:#f0e9f7;border-radius:9px;display:flex;justify-content:space-between;align-items:center;gap:15px;padding:17px 19px}
+.atelier-share-bar strong,.atelier-share-bar span{display:block}
+.atelier-share-bar strong{font-size:13px;margin-bottom:5px}
+.atelier-share-bar span{font-size:12px;color:#6e6274;line-height:1.45}
+.atelier-share-bar .button{flex-shrink:0}
+.atelier-library-caution{font-size:11px;color:#807060;line-height:1.65;margin:15px 2px 0}
+#reset-profile{border-color:#d6beb5;color:#965c4b}
+@media(max-width:1100px){
+ .atelier-profile-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .atelier-library-header{align-items:start}
+ .atelier-library-actions{flex-direction:column;align-items:stretch}
+}
+@media(max-width:740px){
+ .atelier-profile-library{padding:17px;margin-bottom:22px}
+ .atelier-library-header{display:block}
+ .atelier-library-header h2{font-size:28px}
+ .atelier-library-actions{display:flex;flex-direction:row;gap:8px;margin-top:15px}
+ .atelier-profile-list{grid-template-columns:1fr}
+ .atelier-share-bar{display:block;padding:14px}
+ .atelier-share-bar .button{margin-top:12px}
+ .atelier-library-actions .button{padding:10px 12px;font-size:11px}
+}
