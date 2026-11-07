@@ -4,7 +4,8 @@ async function curator(action,more={}){
  if(!access)throw Error("Enter the owner pilot access code to use the AI curator.");
  const payload={action,context:{
   artist:a.artist,engine:a.engine,medium:a.medium,intent:a.intent,exclusions:a.exclusions,
-  artistStatement:a.intent,observations:a.observations,patterns:a.patterns,history:a.history,guide:a.guide
+  artistStatement:a.intent,observations:a.observations,patterns:a.patterns,history:a.history,guide:a.guide,
+  northStar:a.northStar,insights:a.insights,conflicts:a.conflicts,reviews:a.reviews,focusDimension:a.focusDimension,coverage:a.coverage
  },...more};
  const response=await fetch("/api/artist-guide",{method:"POST",headers:{"Content-Type":"application/json","x-prototype-code":access},body:JSON.stringify(payload)});
  const result=await response.json().catch(()=>({error:"The curator returned an unreadable response."}));
@@ -28,7 +29,12 @@ async function analyzeWork(){
   a.patterns=Array.isArray(result.patterns)?result.patterns.slice(0,15):[];
   a.gaps=Array.isArray(result.gaps)?result.gaps.slice(0,12):[];
   a.readiness=Math.max(5,Math.min(30,Number(result.confidence||25)*.3));
-  a.history=[{role:"assistant",text:result.firstQuestion||"What makes this particular artistic process unique?"}];
+  if(result.firstQuestion){
+    const q=String(result.firstQuestion).slice(0,2500);
+    if(!a.history.length||!a.history.some(m=>m.text===q))a.history.push({role:"assistant",text:q,dimension:"concept"});
+  }
+  if(Array.isArray(result.tensions))addDNAConflicts(result.tensions);
+  updateDNACoverage();
   goto("interview");inform("Analysis complete. The curator has its first question.");
  }catch(err){$("analysis-pending").textContent=err.message;inform(err.message)}
  finally{busy(false);drawSidebar()}
@@ -41,20 +47,32 @@ function startInterview(){
 }
 async function answerQuestion(){
  if(pending)return;
- const text=$("chat-input").value.trim();if(!text){inform("Write your answer to the curator first.");return}
- a.history.push({role:"artist",text});$("chat-input").value="";renderChat();saveLocal();busy(true,"Interviewing…");
- $("chat-status").textContent="Following the thread of your creative choices…";
+ captureNorthStar();
+ const reply=$("chat-input").value.trim();
+ if(!reply){inform("Write your answer to the curator first.");return}
+ a.history.push({role:"artist",text:reply,dimension:a.focusDimension||""});
+ $("chat-input").value="";
+ updateDNACoverage();saveLocal();renderChat();busy(true,"Interviewing…");
+ $("chat-status").textContent="Checking this against the artist's accumulated Creative DNA…";
  try{
   const result=await curator("interview");
-  a.history.push({role:"assistant",text:result.reply||"Which of those choices would you never compromise?"});
-  if(Array.isArray(result.insights))a.insights.push(...result.insights.filter(x=>x&&x.fact).slice(0,4));
-  if(Array.isArray(result.gaps))a.gaps=result.gaps.slice(0,12);
-  if(result.coverage&&typeof result.coverage==="object")a.coverage=result.coverage;
-  if(Number.isFinite(Number(result.readiness)))a.readiness=Math.min(100,Math.max(0,Number(result.readiness)));
-  saveLocal();renderChat();drawSidebar();
- }catch(err){inform(err.message);$("chat-status").textContent="Your answer is saved. Enter the access code and retry."}
- finally{busy(false);$("chat-status").textContent="Answer the next question or distill your guide."}
+  applyInterviewResponse(result);
+  inform("The curator has retained this response in the cumulative Creative DNA record.");
+ }catch(err){inform(err.message);$("chat-status").textContent="Your answer is saved. You can retry the AI curator."}
+ finally{busy(false);$("chat-status").textContent="Answer the next question or run a blind-spot audit."}
 }
+async function auditInterview(){
+ if(pending)return;
+ captureNorthStar();
+ busy(true,"Finding blind spots…");
+ try{
+  const result=await curator("audit");
+  applyInterviewResponse(result);
+  inform("Deep audit complete: the curator selected the most consequential unanswered question.");
+ }catch(err){inform(err.message)}
+ finally{busy(false)}
+}
+
 async function assembleGuide(){
  if(!a.history.length&&!a.intent){inform("First describe your creative process or answer questions.");return}
  busy(true,"Distilling…");
@@ -63,7 +81,7 @@ async function assembleGuide(){
   if(!result.guide||typeof result.guide!=="object")throw Error("Guide synthesis returned no usable recipe.");
   a.guide=result.guide;a.summary=result.summary||"Your private draft is ready to edit.";
   if(Array.isArray(result.openQuestions))a.gaps=result.openQuestions.slice(0,12);
-  goto("guide");inform("Private creative guide assembled. Review and correct every important rule.");
+  updateDNACoverage();goto("guide");inform("Private creative guide assembled. Review and correct every important rule.");
  }catch(err){inform(err.message)}
  finally{busy(false)}
 }
@@ -77,7 +95,7 @@ async function refineGuide(){
   a.guide=result.guide;a.summary=result.summary||"Guide revised according to your feedback.";
   if(Array.isArray(result.openQuestions))a.gaps=result.openQuestions;
   a.history.push({role:"artist",text:"Private guide correction: "+feedback},{role:"assistant",text:a.summary});
-  $("refine-feedback").value="";goto("guide");inform("Guide revised and saved locally.");
+  $("refine-feedback").value="";updateDNACoverage();goto("guide");inform("Guide revised and saved locally.");
  }catch(err){inform(err.message)}
  finally{busy(false)}
 }
