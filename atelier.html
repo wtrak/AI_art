@@ -48,9 +48,19 @@
   <section class="atelier-stage" data-stage="interview" hidden>
    <div class="stage-number">03 / THE CREATIVE CONVERSATION</div><h2 class="serif">An interview with your imagination.</h2><p class="muted">The AI asks one thoughtful question at a time. Help it understand not only what your work looks like, but why you make the choices you do.</p>
    <div class="insight-strip" id="analysis-overview"></div>
+   <details class="dna-north-star">
+     <summary>✳ Your creative north star <span>Describe the feeling, idea and choices behind the style</span></summary>
+     <div class="dna-star-grid">
+       <label class="field"><span>What should someone feel when they encounter your work, even if the subject changes?</span><textarea id="dna-emotion" rows="3" maxlength="1500" placeholder="A quiet feeling of loss without showing the event itself; warmth and unease can coexist..."></textarea></label>
+       <label class="field"><span>What deeper idea or contradiction organizes your artistic choices?</span><textarea id="dna-concept" rows="3" maxlength="1500" placeholder="I transfer the consequence of an event away from the obvious place to one emotionally specific object..."></textarea></label>
+       <label class="field"><span>What do you intentionally sacrifice, exclude, or refuse—even when it's more conventionally beautiful?</span><textarea id="dna-tradeoffs" rows="3" maxlength="1500" placeholder="I'll give up compositional balance if the asymmetry better explains the emotional contradiction..."></textarea></label>
+     </div>
+     <p class="disclaimer">These statements become persistent guideposts for the curator; they are not generic marketing descriptions. You can revise them as you discover new rules.</p>
+   </details>
+   <div id="dna-learning-status" class="dna-learning-status" aria-live="polite"></div>
    <div id="conversation" class="conversation" aria-live="polite"></div>
-   <form id="chat-form" class="chat-form"><label for="chat-input" class="eyebrow">YOUR RESPONSE</label><textarea id="chat-input" rows="4" maxlength="1800" placeholder="Tell us why, not just what. What would you change? What did you intentionally leave out?"></textarea><div class="chat-controls"><span id="chat-status" role="status">Tell the curator what matters.</span><button id="send-answer" type="submit" class="button orange">Send & deepen the interview ↗</button></div></form>
-   <div class="atelier-actions"><button class="button outline" id="compile-guide">✳ Distill my creative DNA</button><span class="muted">You can refine it later through another round of questions.</span></div>
+   <form id="chat-form" class="chat-form"><label for="chat-input" class="eyebrow">YOUR RESPONSE</label><textarea id="chat-input" rows="4" maxlength="4000" placeholder="Explain the why, a specific example, a case where you would break your rule, and the feeling you want to preserve..."></textarea><div class="chat-controls"><span id="chat-status" role="status">Tell the curator what matters.</span><button id="send-answer" type="submit" class="button orange">Send & deepen the interview ↗</button></div></form>
+   <div class="atelier-actions"><button class="button outline" id="compile-guide">✳ Distill my creative DNA</button><button class="button pale" id="audit-interview" type="button">🔍 Find what the AI is missing</button><span class="muted">You can refine it later through another round of questions.</span></div>
   </section>
   <section class="atelier-stage" data-stage="guide" hidden>
    <div class="stage-number">04 / THE SECRET RECIPE · YOUR EYES ONLY</div><h2 class="serif">Your creativity, distilled.</h2><p class="muted">The AI assembles a working interpretation of your artistic decisions. Read it like an editor: tell us exactly what it got wrong or missed. This is a <b>private working draft</b>, not a published engine.</p>
@@ -75,11 +85,13 @@
  </div>
  <aside class="atelier-sidebar">
   <div class="sidebar-top"><span class="eyebrow">PRIVATE ENGINE HEALTH</span><span class="status-light" id="curator-mode">AI curator</span></div>
-  <div class="readiness-num" id="readiness">0<span>%</span></div><div class="muted">Creative DNA interview coverage <small>(AI estimate)</small></div><div id="coverage-bars" class="coverage-bars"></div>
+  <div class="readiness-num" id="readiness">0<span>%</span></div><div class="muted">Research coverage <small>(cumulative checklist, not a style-fidelity grade)</small></div><p class="disclaimer" style="margin-top:8px">A strong engine also needs artist-reviewed test images. More questions alone cannot prove stylistic accuracy.</p><div id="coverage-bars" class="coverage-bars"></div>
   <div class="divider-line"></div>
   <div class="eyebrow">WHAT THE AI IS LEARNING</div><div id="insight-list" class="insight-list"><p class="muted">Begin with your original work and your own words.</p></div>
   <div class="divider-line"></div>
   <div class="eyebrow">OPEN QUESTIONS</div><div id="gap-list" class="gap-list"><p class="muted">The AI will highlight what's missing.</p></div>
+  <div class="divider-line"></div>
+  <div class="eyebrow">UNRESOLVED TENSIONS</div><div id="conflict-list" class="gap-list"><p class="muted">Contradictions to explore will appear here.</p></div>
   <div class="divider-line"></div>
   <label class="field"><span>Pilot access code</span><input id="curator-code" type="password" autocomplete="off" placeholder="Access code from site owner"></label>
   <button class="button pale" id="check-curator" type="button" style="width:100%;margin-top:10px">↺ Check AI connection</button>
