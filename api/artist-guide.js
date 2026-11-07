@@ -384,7 +384,10 @@ module.exports=async function handler(req,res){
   const combined=(rawMessage+" "+rawCause).toLowerCase();
   // Log the upstream diagnostic, never request messages, uploaded art, prompts or API keys.
   const diagnosticId=crypto.randomUUID().slice(0,8);
-  const safeError=(v)=>String(v||"").split("\\n")[0].slice(0,600)
+  // Upstream JSON parse failures can embed the entire private creative guide in cause.message.
+  // Keep only the diagnostic category; never write artist responses or generated text to logs.
+  const safeError=(v)=>String(v||"").split(/Text:|Response:|Artist evidence:|ARTIST'S CORRECTION/i)[0]
+    .split("\\n")[0].slice(0,240)
     .replace(/(sk-(?:ant-)?[A-Za-z0-9_.-]+)/g,"[secret redacted]")
     .replace(/(Bearer\\s+)[A-Za-z0-9_.-]+/gi,"$1[redacted]");
   console.error("Musehouse AI diagnostic",{
@@ -425,7 +428,10 @@ module.exports=async function handler(req,res){
   if(err?.name==="TimeoutError"||err?.name==="AbortError"){
     return send(res,504,{code:"GATEWAY_TIMEOUT",error:"The AI curator timed out. Your work is saved locally; please try again."});
   }
-  if(action==="refine" && ["NoObjectGeneratedError","NoGuideEditsError","SyntaxError"].includes(err?.name)){
+  if(action==="refine" && (
+    ["NoObjectGeneratedError","AI_NoObjectGeneratedError","NoGuideEditsError","SyntaxError"].includes(err?.name)
+    ||combined.includes("no object generated")||combined.includes("could not parse the response")
+  )){
     return send(res,502,{code:"GUIDE_REVISION_FORMAT_ERROR",diagnosticId,
       error:"The AI returned an unusable refinement. Your existing creative guide has not been changed. Retry your correction; if it happens again, share diagnostic "+diagnosticId+"."});
   }
