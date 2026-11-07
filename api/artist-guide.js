@@ -67,6 +67,27 @@ function referenceParts(refs){
  }
  return parts;
 }
+function curatedEvidence(c){
+ // Arrange persistent knowledge first so long interviews cannot truncate away the artist's core rules.
+ const memory={
+   artist:c.artist,engine:c.engine,medium:c.medium,
+   artistStatement:c.artistStatement,intent:c.intent,exclusions:c.exclusions,
+   northStar:c.northStar,
+   confirmedAndInferredRules:(c.insights||[]).slice(-85).map(r=>({
+     fact:text(r.fact,650),dimension:r.dimension,status:r.status,source:r.source,
+     evidence:text(r.evidence,250),effect:text(r.effect,200)
+   })),
+   unresolvedContradictions:(c.conflicts||[]).slice(-25),
+   visualObservations:c.observations,visualPatterns:c.patterns,
+   artistReviewOfGeneratedTests:(c.reviews||[]).slice(-10),
+   existingPrivateGuide:c.guide,
+   recentInterview:(c.history||[]).slice(-12).map(m=>({
+     role:m.role,dimension:m.dimension,text:text(m.text,2200)
+   })),
+   currentlyExploredDimension:c.focusDimension
+ };
+ return JSON.stringify(memory).slice(0,95000);
+}
 async function modelJSON(task,c,parts,maxOutputTokens,deep=false){
  const {generateText}=await import("ai");
  // Direct Anthropic uses the artist owner's Claude Console API balance;
@@ -80,7 +101,7 @@ async function modelJSON(task,c,parts,maxOutputTokens,deep=false){
  const result=await generateText({
   model:activeModel,
   // Gateway routes to the selected paid provider using the team's prepaid AI credits.
-  messages:[{role:"system",content:INSTRUCTION+"\n"+task},{role:"user",content:[{type:"text",text:"Artist evidence, including long-term validated rules: "+JSON.stringify(c).slice(0,72000)},...parts]}],
+  messages:[{role:"system",content:INSTRUCTION+"\n"+task},{role:"user",content:[{type:"text",text:"Artist evidence, including long-term validated rules: "+curatedEvidence(c)},...parts]}],
   maxOutputTokens,
   abortSignal:AbortSignal.timeout(deep?100000:75000)
  });
