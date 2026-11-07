@@ -1,1 +1,1 @@
-(function(){for(const name of ["atelier-base.js","atelier-library.js","atelier-logic.js","atelier-init.js"]){const tag=document.createElement("script");tag.src=name;tag.async=false;document.head.appendChild(tag)}})();
+(function(){for(const name of ["atelier-base.js","atelier-dna.js","atelier-library.js","atelier-logic.js","atelier-init.js"]){const tag=document.createElement("script");tag.src=name;tag.async=false;document.head.appendChild(tag)}})();
