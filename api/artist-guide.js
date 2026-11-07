@@ -238,6 +238,7 @@ function applyGuideEdits(guide,edits){
     const matches=items.map((entry,index)=>entry.includes(find)?index:-1).filter(index=>index>=0);
     if(matches.length!==1)continue;
     const index=matches[0],whole=items[index]===find;
+    if(items[index].split(find).length-1!==1)continue;
     if(op==="remove"){
       if(whole)items.splice(index,1);
       else{
