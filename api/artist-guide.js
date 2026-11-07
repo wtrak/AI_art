@@ -170,7 +170,7 @@ module.exports=async function handler(req,res){
   body=typeof req.body==="string"?JSON.parse(req.body):req.body||{};
  }catch(_){return send(res,400,{error:"Invalid JSON request."})}
  const action=text(body.action,30),c=contextOf(body.context);
- if(!["check","analyze","interview","compile","refine","test"].includes(action))return send(res,400,{error:"Unknown interview action."});
+ if(!["check","analyze","interview","audit","compile","refine","test"].includes(action))return send(res,400,{error:"Unknown interview action."});
  if(action!=="check"&&(!c.artist||!c.engine))return send(res,422,{error:"Provide an artist name and creative engine name."});
  try{
   if(action==="check"){
@@ -191,16 +191,17 @@ module.exports=async function handler(req,res){
   if(action==="analyze"){
    if(!body.references?.length&&!c.artistStatement)return send(res,422,{error:"Upload a work or write about your creative approach first."});
    response=await modelJSON(ANALYZE,c,referenceParts(body.references),2800);
-  }else if(action==="interview")response=await modelJSON(INTERVIEW,c,[],2300);
-  else if(action==="compile")response=await modelJSON(COMPILE,c,[],4500);
+  }else if(action==="interview")response=await modelJSON(INTERVIEW,c,[],3200);
+  else if(action==="audit")response=await modelJSON(AUDIT+"\n"+INTERVIEW,c,[],3800,true);
+  else if(action==="compile")response=await modelJSON(COMPILE,c,[],5600,true);
   else{
    if(!c.guide)return send(res,422,{error:"Create an initial guide first."});
    const feedback=text(body.feedback,1600);
    if(!feedback)return send(res,422,{error:"Explain what to refine."});
-   response=await modelJSON(COMPILE+"\nARTIST CORRECTION (authoritative): "+feedback+"\nRefine existing guide rather than rewriting it without reason.",c,[],4500);
+   response=await modelJSON(COMPILE+"\nARTIST CORRECTION (authoritative): "+feedback+"\nRefine existing guide rather than rewriting it without reason. Preserve provenance and previous decisions unless explicitly superseded.",c,[],5600,true);
   }
   if(!response||typeof response!=="object")throw Error("Empty curator answer");
-  return send(res,200,{...response,mode:"ai",persisted:false,model:process.env.ANTHROPIC_API_KEY?(process.env.CLAUDE_ARTIST_MODEL||"claude-sonnet-5-5"):MODEL,provider:process.env.ANTHROPIC_API_KEY?"anthropic-direct":"gateway"});
+  return send(res,200,{...response,mode:"ai",persisted:false,model:process.env.ANTHROPIC_API_KEY?(process.env.CLAUDE_ARTIST_MODEL||"claude-sonnet-5-5"):(["audit","compile","refine"].includes(action)?DEEP_MODEL:MODEL),provider:process.env.ANTHROPIC_API_KEY?"anthropic-direct":"gateway"});
  }catch(err){
   const rawMessage=String(err?.message||"");
   const rawCause=String(err?.cause?.message||"");
