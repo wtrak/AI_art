@@ -3,7 +3,7 @@ const steps=["identity","references","interview","guide","test"];
 const titles=["Your world","Your work","Interview","Creative DNA","Test it"];
 const $=id=>document.getElementById(id);
 const htmlEscape=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const fresh=()=>({stage:"identity",artist:"",engine:"",medium:"Art",intent:"",exclusions:"",references:[],observations:[],patterns:[],history:[],insights:[],conflicts:[],gaps:[],coverage:{},modelCoverage:{},northStar:{emotion:"",concept:"",tradeoffs:""},focusDimension:"",reviews:[],readiness:0,guide:null,summary:"",lastTest:null});
+const fresh=()=>({stage:"identity",artist:"",engine:"",medium:"Art",intent:"",exclusions:"",references:[],observations:[],patterns:[],history:[],insights:[],conflicts:[],gaps:[],coverage:{},modelCoverage:{},northStar:{emotion:"",concept:"",tradeoffs:""},focusDimension:"",reviews:[],readiness:0,guide:null,summary:"",lastTest:null,lastPlan:null});
 let a=fresh(),pending=false,images={};
 try{const stored=JSON.parse(localStorage.getItem("musehouse_creator_draft")||"null");if(stored&&typeof stored==="object")a={...fresh(),...stored,lastTest:null};}catch(_){}
 function inform(message){const el=$("studio-toast");el.textContent=message;el.style.display="block";clearTimeout(inform.t);inform.t=setTimeout(()=>el.style.display="none",4200)}
@@ -44,7 +44,12 @@ function renderGuide(){
  $("guide-fields").innerHTML=fields.map(([label,k])=>'<article class="guide-field '+(["decisionRules","qualityChecks","uncertainties","emotionalLogic","conceptualLogic","priorityHierarchy","counterexamples"].includes(k)?"wide":"")+'"><h3>'+label+'</h3>'+(Array.isArray(a.guide[k])?'<ul>'+a.guide[k].map(x=>'<li>'+htmlEscape(typeof x==="object"?JSON.stringify(x):x)+'</li>').join("")+'</ul>':'<p>'+htmlEscape(a.guide[k]||"Not yet established")+'</p>')+'</article>').join("");
 }
 function renderTest(){
- $("test-output").innerHTML=a.lastTest?'<img alt="Generated AI engine test" src="'+a.lastTest+'">':'<span class="muted">Your first AI test appears here.</span>';
+ $("test-output").innerHTML=a.lastTest?
+   '<div class="artist-test-result"><img alt="Generated AI engine test" src="'+a.lastTest+'">'+
+   (a.lastPlan?.artistExplanation?'<details class="artist-plan"><summary>Why the engine made these choices</summary><p>'+htmlEscape(a.lastPlan.artistExplanation)+'</p>'+
+     (a.lastPlan.appliedRules?.length?'<strong>Rules applied</strong><ul>'+a.lastPlan.appliedRules.map(x=>'<li>'+htmlEscape(x)+'</li>').join("")+'</ul>':'')+
+     '</details>':'')+'</div>':
+   '<span class="muted">Your first AI test appears here.</span>';
  $("test-good").disabled=!a.lastTest;$("test-bad").disabled=!a.lastTest;
 }
 function goto(stage){
