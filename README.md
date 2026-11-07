@@ -80,3 +80,32 @@ Do not publicly share the owner's `PROTOTYPE_ACCESS_CODE`. Any person with that 
 ## Production requirements before broader invitations
 
 Implement individual artist authentication; private, access-controlled, encrypted reference and recipe storage; versioned engine IDs; explicit creator opt-in and licensing terms; quotas and spend tracking on the server; secure exports; moderation; creator analytics; an owner approval workflow; and deletion/retention controls. Avoid claiming the existing browser-local data is a protected, centrally hosted creator account.
+
+## Creative DNA depth upgrades (November 2026)
+
+This prototype deliberately distinguishes **research coverage** from **stylistic fidelity**. Research coverage is a cumulative checklist that does not fall merely because the model estimates a lower number in the next turn. It is **not** a scientifically validated measure of understanding or proof that an AI output faithfully represents the artist.
+
+### Problems corrected
+- Old behavior: a model-controlled `readiness` field overwrote progress every turn, often oscillating around 45–50%.
+- Old behavior: server sent only the latest 26 chat messages; the artist's growing insights stored in the browser were NOT included in the model request.
+- New: a persistent, source-aware artist rule ledger and creative north star are sent to each interview and guide compilation. A curated payload puts long-term rules before recent dialogue so the key principles survive lengthy sessions.
+
+### Capture more than appearance
+- Artists fill three optional creative north-star statements: intended emotional consequence, central conceptual principle, and deliberate sacrifices or exceptions.
+- Uploaded references can be labeled `signature` (positive), `exception` (legitimate rule-break), or `near-miss` (looks similar but fails artist identity). The curator compares them instead of blindly averaging a single style.
+- New `audit` action critically analyzes unanswered conceptual or emotional questions, contradictions and earlier failed tests.
+- The sidebar tracks ten research dimensions (including emotion, concept, trade-offs, and quality evaluation) and lets creators explicitly approve or dispute proposed rules. Disputed interpretations stay in the memory ledger as rejections, not instructions to reproduce.
+- New compiled-guide fields: `emotionalLogic`, `conceptualLogic`, `priorityHierarchy` and `counterexamples`, alongside composition, color, materials, subject adaptation, ordered instructions, and quality checks.
+- A `test` action first creates a specific visual scene interpretation from the private guide and then sends that plan to the image model. It returns a private artist-facing explanation of what decisions the AI applied, making corrections easier.
+
+### Model routing and costs
+- `ARTIST_INTERVIEW_MODEL` default: `openai/gpt-5.4-mini`. Handles interview turns and multimodal reference analysis; higher capability than the original GPT-4.1 Mini configuration.
+- `ARTIST_DEEP_MODEL` default: `openai/gpt-5.4`. Handles intentionally requested deep blind-spot audits and compiling/refining private guides, which use more prepaid AI Gateway credits.
+- `GATEWAY_IMAGE_MODEL`: independent image generator. Artist test requests also make a small extra language-model call to interpret the scene prior to generation.
+- If `ANTHROPIC_API_KEY` is set, artist interviews and guide compilation use direct Anthropic; image generation remains separate.
+
+### Pilot limitations
+AI may still misunderstand emotion or conceptual decisions; only the **participating artist** can accept the result. Neither completion percentage nor text similarity is a fidelity guarantee. Artist records remain browser-local, and there is no server-side per-user usage accounting or protected private art library. Original image binaries remain in browser memory only. Do not distribute owner pilot access credentials to an uncontrolled public audience.
+
+### Suggested evaluation
+Test the same engine on 5–10 diverse subjects, some entirely unlike its source work. For each output, ask the artist whether the emotion, central contradiction, compositional trade-offs, material carrier, and purposeful omissions are preserved—not merely the palette or decorative motifs. Record near-misses and feed their exact failure reasons back into the guide. Repeat until the artist considers the engine reliably representative.
