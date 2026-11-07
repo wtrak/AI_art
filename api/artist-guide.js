@@ -391,7 +391,7 @@ module.exports=async function handler(req,res){
     .replace(/(sk-(?:ant-)?[A-Za-z0-9_.-]+)/g,"[secret redacted]")
     .replace(/(Bearer\\s+)[A-Za-z0-9_.-]+/gi,"$1[redacted]");
   console.error("Musehouse AI diagnostic",{
-    diagnosticId,action,model:process.env.ANTHROPIC_API_KEY?"anthropic-direct":MODEL,
+    diagnosticId,action,model:process.env.ANTHROPIC_API_KEY?"anthropic-direct":(["audit","compile","refine"].includes(action)?DEEP_MODEL:action==="test"?IMAGE_MODEL:MODEL),
     name:String(err?.name||"UnknownError"),status:err?.statusCode||err?.status||err?.cause?.statusCode||null,
     message:safeError(rawMessage),cause:safeError(rawCause),
     gatewayCode:typeof err?.data?.code==="string"?err.data.code.slice(0,80):null,
