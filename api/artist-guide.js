@@ -25,7 +25,7 @@ function contextOf(raw){
   patterns:Array.isArray(c.patterns)?c.patterns.slice(0,15):[],
   // Recency window keeps requests economical. Long-term memory lives in the evolving insight ledger below.
   history:Array.isArray(c.history)?c.history.slice(-22).filter(m=>["artist","assistant"].includes(m.role)).map(m=>({role:m.role,dimension:text(m.dimension,40),text:text(m.text,3800)})):[],
-  insights:Array.isArray(c.insights)?c.insights.slice(-100).map(i=>({fact:text(i.fact||i,850),dimension:text(i.dimension,30),source:text(i.source,100),status:text(i.status,30),evidence:text(i.evidence||i.evidenceQuote,400),effect:text(i.effect,300)})):[],
+  insights:Array.isArray(c.insights)?c.insights.slice(-100).map(i=>({fact:text(i.fact||i,850),dimension:text(i.dimension,30),source:text(i.source,100),status:text(i.status,30),artistReviewed:i.artistReviewed===true,evidence:text(i.evidence||i.evidenceQuote,400),effect:text(i.effect,300)})):[],
   conflicts:Array.isArray(c.conflicts)?c.conflicts.slice(-30).map(v=>text(v,500)):[],
   northStar:c.northStar&&typeof c.northStar==="object"?{
     emotion:text(c.northStar.emotion,1500),
@@ -42,6 +42,7 @@ const INSTRUCTION=[
   "You are Musehouse's deep artist-interview curator, a creative ethnographer and master art director. You are interviewing a participating artist about their own original process.",
   "Your task is not to extract a list of stylish adjectives. Recover the artist's generative grammar: the priorities, causal relationships, deliberate visual transfers, emotional logic, choices of what NOT to show, trade-offs, and criteria behind unfamiliar subject matter.",
   "Distinguish three kinds of knowledge: (1) artist-confirmed intentional rule backed by artist words; (2) visible observation not yet confirmed by the artist; (3) speculative hypothesis needing explicit confirmation. Never label an inference as artist-confirmed.",
+ "Rules marked rejected are NEGATIVE corrections, not valid style rules. Do not use them in the generated engine. Resolve the artist\'s correction in the next question. Treat explicit artistReviewed=true as strongest evidence.",
   "A meaningful artist rule should explain WHEN a visual decision applies, HOW it is executed, WHY it matters emotionally or conceptually, and what apparent alternatives the artist would reject.",
   "When relevant, investigate how artistic meaning arises from physical placement, material carriers, limits and contradictions rather than mere ornamental motifs. Do not impose surrealism, symbolism or any particular artistic philosophy if the artist did not endorse it.",
   "Persist accumulated rules across long sessions using the supplied insights and artist north-star statements. Do not re-ask answered questions unless a true contradiction or edge case remains.",
@@ -74,7 +75,7 @@ function curatedEvidence(c){
    artistStatement:c.artistStatement,intent:c.intent,exclusions:c.exclusions,
    northStar:c.northStar,
    confirmedAndInferredRules:(c.insights||[]).slice(-85).map(r=>({
-     fact:text(r.fact,650),dimension:r.dimension,status:r.status,source:r.source,
+     fact:text(r.fact,650),dimension:r.dimension,status:r.status,source:r.source,artistReviewed:r.artistReviewed===true,
      evidence:text(r.evidence,250),effect:text(r.effect,200)
    })),
    unresolvedContradictions:(c.conflicts||[]).slice(-25),
