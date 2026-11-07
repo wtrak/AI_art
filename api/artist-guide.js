@@ -160,17 +160,45 @@ const COMPILE=[
  '"summary":"precise report of what was retained and what remains uncertain","openQuestions":["up to 5 questions that would materially improve fidelity"]}',
  "Use concise but substantive operational language. Answer as many fields as evidence supports. If the artist never specified a rule, do not invent it."
 ].join("\n");
+const SCENE_INTERPRETATION=[
+ "ACTION: ACTIVATE THE PRIVATE ARTIST ENGINE FOR ONE NEW CUSTOMER REQUEST.",
+ "Before painting anything, interpret how this artist's OWN deep conceptual and emotional process would transform this precise subject.",
+ "The user subject must remain recognizable. Determine what is represented, what is withheld, what is moved or displaced if this artist's rules call for it, where emotional consequences belong, and which single visual choice organizes the scene.",
+ "Avoid a superficial style transfer: colors, mediums, motifs and lighting are not substitutes for the artist's underlying causal decision rules.",
+ "Apply the priority hierarchy of the artist guide. Respect physical plausibility and intentional impossibilities only as explicitly supported in the guide. Avoid arbitrary surreal objects or symbolic decorations unless central to this artist's actual practice.",
+ "Before finalizing, compare the proposed image against every counterexample and forbidden move in the private guide and the artist's failed-test corrections.",
+ "The response should be a specific drawable scene, not a philosophy essay. If the guide is uncertain, do not invent unconfirmed artistic rules.",
+ "Output only valid JSON: ",
+ '{"scenePrompt":"250-550 words of highly specific visual scene instructions; compositional location, concrete subjects and materials, emotional logic and what must remain understated",',
+ '"avoid":["5-12 ways this scene could become generically similar but artistically wrong"],',
+ '"appliedRules":["3-7 artist rules that actually shaped scene choices"],',
+ '"artistExplanation":"2-4 sentences explaining the crucial scene decisions to the original artist, without marketing adjectives"}'
+].join("\n");
 async function test(c,body){
  if(!c.guide)return {status:422,data:{error:"Compile a creative guide before testing."}};
  const prompt=text(body.testPrompt,1200).trim();
  if(!prompt)return {status:422,data:{error:"Write a test request first."}};
  if(c.medium==="Music")return {status:422,data:{error:"Music generation is a future adapter."}};
  const {generateImage}=await import("ai");
+ // A separate planning pass translates abstract creative principles into specific scene decisions.
+ // The image model alone tends to overfit decorative style cues, missing conceptual logic.
+ let plan=null;
+ try{
+   plan=await modelJSON(SCENE_INTERPRETATION+"\nCUSTOMER TEST SUBJECT: "+prompt,c,[],2600,true);
+ }catch(error){
+   // Preserve generation availability if the optional reasoning pass fails.
+   console.warn("Artist scene interpretation fell back to direct guide",String(error?.name||"error"));
+ }
+ const scene=typeof plan?.scenePrompt==="string" && plan.scenePrompt.trim().length>30 ? plan.scenePrompt.trim().slice(0,6500):prompt;
+ const avoided=Array.isArray(plan?.avoid)?plan.avoid.filter(x=>typeof x==="string").slice(0,12):[];
  const instructions=[
-  "Generate one original artwork. Apply this creator-owned private artistic decision guide, not a generic style label.",
-  "Respect the artist's invariants, negative rules and customer subject. Do not put the guide text into the image.",
-  "ARTIST PRIVATE GUIDE:\n"+JSON.stringify(c.guide).slice(0,15000),
-  "CUSTOMER REQUEST:\n"+prompt
+  "Generate an original, emotionally specific artwork created through the participating artist's authorized process.",
+  "CUSTOMER SUBJECT (must remain recognizable): "+prompt,
+  "COMPOSED SCENE: "+scene,
+  "APPLY THE FOLLOWING PRIVATE ARTIST-DEFINED RULES, not just medium, palette and motifs:",
+  JSON.stringify(c.guide).slice(0,14500),
+  "ARTISTIC WRONG TURNS TO AVOID: "+avoided.join(" | "),
+  "Render the material, composition and emotional truth, not a textual explanation. No recipe, metadata, watermarks or explanatory captions in the image."
  ].join("\n\n");
  const photo=text(body.testReference,1400000);
  const source= /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(photo)?[Buffer.from(photo.split(",")[1],"base64")]:[];
@@ -178,7 +206,7 @@ async function test(c,body){
  const image=result.images?.[0]||result.image;
  const b64=image?.base64||(image?.uint8Array?Buffer.from(image.uint8Array).toString("base64"):"");
  if(!b64||b64.length>3800000)throw Error("Missing or oversized output image");
- return {status:200,data:{imageDataUrl:"data:"+(image.mediaType||"image/png")+";base64,"+b64,mode:"ai",persisted:false}};
+ return {status:200,data:{imageDataUrl:"data:"+(image.mediaType||"image/png")+";base64,"+b64,mode:"ai",persisted:false,artistExplanation:text(plan?.artistExplanation,1600),appliedRules:Array.isArray(plan?.appliedRules)?plan.appliedRules.slice(0,8).map(x=>text(x,320)):[],usedCreativePlan:!!plan}};
 }
 module.exports=async function handler(req,res){
  res.setHeader("Cache-Control","private,no-store");res.setHeader("X-Content-Type-Options","nosniff");
