@@ -55,8 +55,8 @@ function referenceParts(refs){
  const parts=[];
  if(!Array.isArray(refs))return parts;
  for(const r of refs.slice(0,6)){
-  const kind=r.kind==="pdf"?"pdf":r.kind==="text"?"text":"image",name=text(r.name,90),note=text(r.note,600);
-  parts.push({type:"text",text:JSON.stringify({name,note,kind})});
+  const kind=r.kind==="pdf"?"pdf":r.kind==="text"?"text":"image",name=text(r.name,90),note=text(r.note,600),role=["signature","exception","near-miss"].includes(r.role)?r.role:"signature";
+  parts.push({type:"text",text:JSON.stringify({name,note,kind,artistClassification:role,interpretation:role==="near-miss"?"This is a NEGATIVE example; discover why it betrays the style.":role==="exception"?"This is an INTENTIONAL exception; ask when that rule can be broken.":"This is a POSITIVE signature example."})});
   if(kind==="text"){parts.push({type:"text",text:"Text reference: "+text(r.text,4500)});continue}
   const data=text(r.data,1400000);
   if(kind==="pdf"&&/^data:application\/pdf;base64,[A-Za-z0-9+\/=]+$/.test(data)){
@@ -109,6 +109,7 @@ async function modelJSON(task,c,parts,maxOutputTokens,deep=false){
 }
 const ANALYZE=[
  "ACTION: observe original creator references. Do not claim to know their motivations.",
+ "Compare signature pieces against intentional exceptions and near-miss examples. Do not average them into one generic look. Ask why a superficially similar negative example feels wrong.",
  "Return exact JSON shape:",
  '{"observations":[{"name":"reference file","observed":"specific observable visual evidence","mayMatter":"tentative interpretation","question":"question to verify an artistic choice"}],',
  '"patterns":["recurring visible choices"],"tensions":["important differences between samples"],',
