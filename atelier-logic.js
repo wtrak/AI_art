@@ -140,7 +140,7 @@ async function addReferences(files){
      inform("Reattached "+f.name+" to its original reference notes.");
    }else{
      const id="ref_"+Date.now()+"_"+Math.floor(Math.random()*100000);
-     a.references.push({id,name:f.name,kind,mime:f.type,note:"",text:body});
+     a.references.push({id,name:f.name,kind,mime:f.type,role:"signature",note:"",text:body});
      if(data)images[id]=data;
    }
   }catch(err){inform(err.message)}
