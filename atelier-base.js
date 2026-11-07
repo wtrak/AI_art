@@ -16,7 +16,14 @@ function drawSidebar(){
  if(typeof updateDNACoverage==="function")updateDNACoverage();
  $("readiness").innerHTML=Math.round(a.readiness||0)+"<span>%</span>";
  $("coverage-bars").innerHTML=DNA_DIMENSIONS.map(([k,label])=>'<div class="coverage-row"><span title="'+htmlEscape(label)+'">'+htmlEscape(label)+'</span><div class="coverage-track"><div class="coverage-fill" style="width:'+Math.min(100,Math.max(0,a.coverage[k]||0))+'%"></div></div><span>'+Math.round(a.coverage[k]||0)+'</span></div>').join("");
- $("insight-list").innerHTML=a.insights.length?a.insights.slice(-6).map(i=>'<div class="insight-item">'+htmlEscape(i.fact||i)+'<small>'+htmlEscape(i.source||"artist")+'</small></div>').join(""):'<p class="muted">Show the curator your work and how you think.</p>';
+ $("insight-list").innerHTML=a.insights.length?a.insights.slice(-6).map((i,offset)=>{
+   const index=a.insights.length-Math.min(6,a.insights.length)+offset;
+   const status=i?.artistReviewed===true?"✓ Artist approved":i?.status==="rejected"?"Needs correction":"Proposed interpretation";
+   return '<div class="insight-item">'+htmlEscape(i.fact||i)+
+     '<small>'+htmlEscape(status)+' · '+htmlEscape(i.source||"artist explanation")+'</small>'+
+     (i?.artistReviewed===true?'<div class="dna-approval">Artist approved</div>':
+     '<div class="dna-insight-actions"><button type="button" data-insight-approve="'+index+'">✓ Yes, this is right</button><button type="button" data-insight-dispute="'+index+'">✎ Not quite</button></div>')+'</div>';
+ }).join(""):'<p class="muted">Show the curator your work and how you think.</p>';
  $("gap-list").innerHTML=a.gaps.length?a.gaps.slice(0,6).map(i=>'<div class="gap-item">'+htmlEscape(i)+'</div>').join(""):'<p class="muted">Your open questions will appear here.</p>';
  if($("conflict-list"))$("conflict-list").innerHTML=(a.conflicts||[]).length?a.conflicts.slice(-5).map(i=>'<div class="gap-item">'+htmlEscape(i)+'</div>').join(""):'<p class="muted">Unresolved artistic tensions will appear here.</p>';
 }
