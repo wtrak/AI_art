@@ -3,7 +3,7 @@ const steps=["identity","references","interview","guide","test"];
 const titles=["Your world","Your work","Interview","Creative DNA","Test it"];
 const $=id=>document.getElementById(id);
 const htmlEscape=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const fresh=()=>({stage:"identity",artist:"",engine:"",medium:"Art",intent:"",exclusions:"",references:[],observations:[],patterns:[],history:[],insights:[],conflicts:[],gaps:[],coverage:{},modelCoverage:{},northStar:{emotion:"",concept:"",tradeoffs:""},focusDimension:"",reviews:[],readiness:0,guide:null,summary:"",lastTest:null,lastPlan:null});
+const fresh=()=>({stage:"identity",artist:"",engine:"",medium:"Art",intent:"",exclusions:"",references:[],observations:[],patterns:[],history:[],insights:[],conflicts:[],gaps:[],coverage:{},modelCoverage:{},northStar:{emotion:"",concept:"",tradeoffs:""},focusDimension:"",reviews:[],readiness:0,guide:null,guideVersions:[],summary:"",lastTest:null,lastPlan:null});
 let a=fresh(),pending=false,images={};
 try{const stored=JSON.parse(localStorage.getItem("musehouse_creator_draft")||"null");if(stored&&typeof stored==="object")a={...fresh(),...stored,lastTest:null};}catch(_){}
 function inform(message){const el=$("studio-toast");el.textContent=message;el.style.display="block";clearTimeout(inform.t);inform.t=setTimeout(()=>el.style.display="none",4200)}
@@ -38,6 +38,7 @@ function renderChat(){
  $("conversation").scrollTop=$("conversation").scrollHeight;
 }
 function renderGuide(){
+ const undo=$("undo-guide");if(undo)undo.disabled=!Array.isArray(a.guideVersions)||a.guideVersions.length===0;
  $("guide-summary").textContent=a.summary||"A working creative guide assembled from your answers. Edit and correct it until it accurately represents your choices.";
  if(!a.guide){$("guide-fields").innerHTML='<article class="guide-field wide">No compiled guide yet. Continue the interview and select “Distill my creative DNA.”</article>';return}
  const fields=[["Creative thesis","creativeThesis"],["Emotional logic","emotionalLogic"],["Conceptual logic","conceptualLogic"],["Priority hierarchy","priorityHierarchy"],["Signature","signature"],["Composition","composition"],["Color","color"],["Light","light"],["Texture","texture"],["Subject adaptation","subjectLogic"],["Decision rules","decisionRules"],["Counterexamples","counterexamples"],["Avoid","avoid"],["Constraints","constraints"],["Quality checks","qualityChecks"],["Provenance","provenance"],["Uncertainties","uncertainties"]];
