@@ -193,7 +193,7 @@ const GUIDE_EDIT_SCHEMA={
   summary:{type:"string",description:"Brief, precise explanation of the artist's correction."},
   openQuestions:{type:"array",items:{type:"string"},description:"Only unresolved questions that affect artistic fidelity."},
   edits:{
-   type:"array",minItems:1,maxItems:10,
+   type:"array",
    description:"Only the guide fields affected by this correction; all untouched fields are preserved.",
    items:{
     type:"object",additionalProperties:false,
