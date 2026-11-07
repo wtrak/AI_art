@@ -89,7 +89,7 @@ function curatedEvidence(c){
  };
  return JSON.stringify(memory).slice(0,95000);
 }
-async function modelJSON(task,c,parts,maxOutputTokens,deep=false){
+async function modelJSON(task,c,parts,maxOutputTokens,deep=false,timeoutMs=null){
  const {generateText}=await import("ai");
  // Direct Anthropic uses the artist owner's Claude Console API balance;
  // it does not require Vercel AI Gateway billing.
@@ -104,7 +104,7 @@ async function modelJSON(task,c,parts,maxOutputTokens,deep=false){
   // Gateway routes to the selected paid provider using the team's prepaid AI credits.
   messages:[{role:"system",content:INSTRUCTION+"\n"+task},{role:"user",content:[{type:"text",text:"Artist evidence, including long-term validated rules: "+curatedEvidence(c)},...parts]}],
   maxOutputTokens,
-  abortSignal:AbortSignal.timeout(deep?100000:75000)
+  abortSignal:AbortSignal.timeout(timeoutMs|| (deep?100000:75000))
  });
  return readJSON(result.text);
 }
@@ -184,7 +184,7 @@ async function test(c,body){
  // The image model alone tends to overfit decorative style cues, missing conceptual logic.
  let plan=null;
  try{
-   plan=await modelJSON(SCENE_INTERPRETATION+"\nCUSTOMER TEST SUBJECT: "+prompt,c,[],2600,true);
+   plan=await modelJSON(SCENE_INTERPRETATION+"\nCUSTOMER TEST SUBJECT: "+prompt,c,[],2400,false,35000);
  }catch(error){
    // Preserve generation availability if the optional reasoning pass fails.
    console.warn("Artist scene interpretation fell back to direct guide",String(error?.name||"error"));
@@ -202,7 +202,7 @@ async function test(c,body){
  ].join("\n\n");
  const photo=text(body.testReference,1400000);
  const source= /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(photo)?[Buffer.from(photo.split(",")[1],"base64")]:[];
- const result=await generateImage({model:IMAGE_MODEL,prompt:source.length?{text:instructions,images:source}:instructions,size:"1024x1024",abortSignal:AbortSignal.timeout(90000)});
+ const result=await generateImage({model:IMAGE_MODEL,prompt:source.length?{text:instructions,images:source}:instructions,size:"1024x1024",abortSignal:AbortSignal.timeout(75000)});
  const image=result.images?.[0]||result.image;
  const b64=image?.base64||(image?.uint8Array?Buffer.from(image.uint8Array).toString("base64"):"");
  if(!b64||b64.length>3800000)throw Error("Missing or oversized output image");
