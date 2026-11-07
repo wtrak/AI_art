@@ -184,7 +184,7 @@ async function test(c,body){
  // The image model alone tends to overfit decorative style cues, missing conceptual logic.
  let plan=null;
  try{
-   plan=await modelJSON(SCENE_INTERPRETATION+"\nCUSTOMER TEST SUBJECT: "+prompt,c,[],2400,false,35000);
+   plan=await modelJSON(SCENE_INTERPRETATION+"\nCUSTOMER TEST SUBJECT: "+prompt,c,referenceParts(body.references),2400,false,35000);
  }catch(error){
    // Preserve generation availability if the optional reasoning pass fails.
    console.warn("Artist scene interpretation fell back to direct guide",String(error?.name||"error"));
