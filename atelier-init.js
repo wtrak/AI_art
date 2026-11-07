@@ -68,6 +68,11 @@
    const id=remove.dataset.refRemove;a.references=a.references.filter(r=>r.id!==id);delete images[id];renderReferences();saveLocal();return
   }
  });
+ document.addEventListener("change",e=>{
+  if(!e.target.matches("[data-ref-role]"))return;
+  const ref=a.references.find(r=>r.id===e.target.dataset.refRole);
+  if(ref){ref.role=e.target.value;saveLocal()}
+ });
  document.addEventListener("input",e=>{
   if(!e.target.matches("[data-ref-note]"))return;
   const ref=a.references.find(r=>r.id===e.target.dataset.refNote);if(ref){ref.note=e.target.value;saveLocal()}
