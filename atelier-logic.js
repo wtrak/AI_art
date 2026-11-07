@@ -106,7 +106,9 @@ async function testGuide(){
  try{
   const result=await curator("test",{testPrompt:prompt});
   if(!result.imageDataUrl)throw Error("No image returned.");
-  a.lastTest=result.imageDataUrl;renderTest();inform("AI test generated. Compare it with your own creative decisions.");
+  a.lastTest=result.imageDataUrl;
+  a.lastPlan={artistExplanation:String(result.artistExplanation||""),appliedRules:Array.isArray(result.appliedRules)?result.appliedRules:[],usedCreativePlan:!!result.usedCreativePlan};
+  renderTest();saveLocal();inform("AI test generated. Evaluate whether its artistic reasoning and result actually reflect your work.");
  }catch(err){$("test-output").textContent=err.message;inform(err.message)}
  finally{busy(false)}
 }
