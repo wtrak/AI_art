@@ -104,7 +104,8 @@ async function testGuide(){
  const prompt=$("test-prompt").value.trim();if(!prompt){inform("Enter a new test subject.");return}
  busy(true,"Generating…");$("test-output").textContent="Generating a test from your private creative guide…";
  try{
-  const result=await curator("test",{testPrompt:prompt});
+  const testReferences=a.references.filter(r=>images[r.id]&&(r.kind==="image"||r.kind==="pdf")).slice(0,4).map(r=>({...r,data:images[r.id]}));
+  const result=await curator("test",{testPrompt:prompt,references:testReferences});
   if(!result.imageDataUrl)throw Error("No image returned.");
   a.lastTest=result.imageDataUrl;
   a.lastPlan={artistExplanation:String(result.artistExplanation||""),appliedRules:Array.isArray(result.appliedRules)?result.appliedRules:[],usedCreativePlan:!!result.usedCreativePlan};
