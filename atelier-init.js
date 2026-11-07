@@ -62,6 +62,29 @@
   $("refine-feedback").value=comment;goto("guide");inform("Your test feedback is ready for refinement.");
  });
  document.addEventListener("click",e=>{
+  const accepted=e.target.closest("[data-insight-approve]");
+  if(accepted){
+    const insight=a.insights[Number(accepted.dataset.insightApprove)];
+    if(insight && typeof insight==="object"){
+      insight.artistReviewed=true;insight.status="artist-confirmed";insight.source="explicit artist approval";
+      updateDNACoverage();saveLocal();drawSidebar();renderDNASummary();
+      inform("Artist-approved rule saved to your private Creative DNA record.");
+    }
+    return;
+  }
+  const disputed=e.target.closest("[data-insight-dispute]");
+  if(disputed){
+    const insight=a.insights[Number(disputed.dataset.insightDispute)];
+    if(insight && typeof insight==="object"){
+      insight.artistReviewed=false;insight.status="rejected";
+      addDNAConflicts(["Artist disagrees with the AI interpretation: "+insight.fact]);
+      saveLocal();goto("interview");
+      $("chat-input").value="The curator misunderstood this rule: "+insight.fact+"\\nWhat I actually mean is: ";
+      $("chat-input").focus();
+      inform("Correct the AI in your own words. Your correction will be retained for future questions and guide revisions.");
+    }
+    return;
+  }
   const stage=e.target.closest("[data-go-stage]");if(stage){gather();goto(stage.dataset.goStage);return}
   const sample=e.target.closest("[data-test-sample]");if(sample){$("test-prompt").value=sample.dataset.testSample;return}
   const remove=e.target.closest("[data-ref-remove]");if(remove){
