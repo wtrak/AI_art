@@ -234,10 +234,18 @@ function applyGuideEdits(guide,edits){
     if(items.includes(value))continue;
     items.push(value);
    }else{
-    const index=items.findIndex(x=>x===find);
-    if(index<0)continue;
-    if(op==="remove")items.splice(index,1);
-    else items[index]=value;
+    // A unique exact excerpt can revise a long list item without retyping it.
+    const matches=items.map((entry,index)=>entry.includes(find)?index:-1).filter(index=>index>=0);
+    if(matches.length!==1)continue;
+    const index=matches[0],whole=items[index]===find;
+    if(op==="remove"){
+      if(whole)items.splice(index,1);
+      else{
+        const updated=items[index].replace(find,"").replace(/\s{2,}/g," ").trim();
+        if(updated)items[index]=updated;else items.splice(index,1);
+      }
+    }else if(whole)items[index]=value;
+    else items[index]=items[index].replace(find,value);
    }
    if(!items.length&&!["uncertainties","counterexamples"].includes(field))continue;
    next[field]=items;
@@ -275,7 +283,7 @@ async function refineGuideIncrementally(c,feedback){
   "ACTION: SURGICAL ARTIST GUIDE CORRECTION. Preserve the artist's existing creative guide and alter only what this correction proves needs changing.\n"+
   "Return MAXIMUM THREE SHORT PATCHES. Each patch contains four short fields: field, operation, find, value.\n"+
   "PREFER replace: quote an EXACT short substring from the current field as find and supply only the corrected replacement phrase as value.\n"+
-  "For list fields, find must match ONE COMPLETE existing list item verbatim; value is ONE revised item. For remove, identify exactly one existing phrase or item. For append, value is ONE short new thought or item, not the whole field.\n"+
+  "For list fields, find may be a SHORT EXACT CLAUSE found in exactly one list item; replace only that clause and preserve the rest. If find equals the whole list item, replace the item. For append, value is ONE short new item.\n"+
   "Adaptations use find as the EXACT existing request and value as the revised approach; append uses find as the NEW request.\n"+
   "NEVER copy or regenerate entire guide fields, whole lists, full creative narratives or the entire guide. Max 300 characters per value; max 220 per find; max 200 characters in summary; at most 2 short openQuestions.\n"+
   "When a familiar symbol is acceptable only because of its material role, correct the specific overly broad prohibition or add a precise exception; do not rewrite the creative thesis or unrelated sections.\n"+
