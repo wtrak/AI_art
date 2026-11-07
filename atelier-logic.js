@@ -92,10 +92,15 @@ async function refineGuide(){
  try{
   const result=await curator("refine",{feedback});
   if(!result.guide)throw Error("The revision was not returned.");
+  if(!Array.isArray(a.guideVersions))a.guideVersions=[];
+  a.guideVersions.push({guide:JSON.parse(JSON.stringify(a.guide)),summary:a.summary||"",feedback:feedback.slice(0,1600),at:Date.now()});
+  a.guideVersions=a.guideVersions.slice(-4);
   a.guide=result.guide;a.summary=result.summary||"Guide revised according to your feedback.";
-  if(Array.isArray(result.openQuestions))a.gaps=result.openQuestions;
+  if(Array.isArray(result.openQuestions))a.gaps=result.openQuestions.slice(0,12);
   a.history.push({role:"artist",text:"Private guide correction: "+feedback},{role:"assistant",text:a.summary});
-  $("refine-feedback").value="";updateDNACoverage();goto("guide");inform("Guide revised and saved locally.");
+  $("refine-feedback").value="";updateDNACoverage();goto("guide");
+  const changed=Array.isArray(result.changedFields)?result.changedFields.length:0;
+  inform(changed?"Revised "+changed+" guide section"+(changed===1?"":"s")+". Other sections were preserved. Undo is available.":"Guide revised and saved locally. Undo is available.");
  }catch(err){inform(err.message)}
  finally{busy(false)}
 }
