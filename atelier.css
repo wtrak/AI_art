@@ -24,3 +24,10 @@
 .dna-insight-actions button{font-size:10px;font-weight:800;border-radius:5px;border:1px solid #c6b9ab;padding:7px 8px;background:#fff;color:#473c35}
 .dna-insight-actions button:hover{background:#f0e6d9}
 .dna-approval{font-size:10px;color:#32633d;font-weight:800;margin-top:7px}
+
+.artist-test-result{width:100%;text-align:left}
+.artist-test-result img{display:block;margin:0 auto 14px}
+.artist-plan{background:#fff8eb;border:1px solid #dcd0bc;border-radius:8px;padding:15px 18px;color:#443b32}
+.artist-plan summary{font-weight:800;cursor:pointer;font-size:13px}
+.artist-plan p,.artist-plan li{font-size:12px;line-height:1.7}
+.artist-plan ul{padding-left:18px}
