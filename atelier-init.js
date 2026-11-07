@@ -25,6 +25,15 @@
  ["dna-emotion","dna-concept","dna-tradeoffs"].forEach(id=>$(id).addEventListener("change",captureNorthStar));
  $("refine-guide").addEventListener("click",refineGuide);
  $("back-interview").addEventListener("click",()=>goto("interview"));
+ $("undo-guide").addEventListener("click",()=>{
+  if(pending)return;
+  if(!Array.isArray(a.guideVersions)||!a.guideVersions.length){inform("No previous guide version to restore.");return}
+  const previous=a.guideVersions.pop();
+  a.guide=previous.guide;
+  a.summary=previous.summary||"Previous creative guide restored.";
+  saveLocal();goto("guide");
+  inform("Last refinement undone. The previous private guide was restored.");
+ });
  $("to-test").addEventListener("click",()=>goto("test"));
  $("to-guide").addEventListener("click",()=>goto("guide"));
  $("try-ai-test").addEventListener("click",testGuide);
