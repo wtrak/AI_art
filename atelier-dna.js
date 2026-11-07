@@ -81,10 +81,11 @@ function updateDNACoverage(){
  ensureDNA();
  const counts={};const confirmed={};
  for(const item of a.insights){
+  if(!item||item.status==="rejected")continue;
   const dim=dnaDimension(item.dimension, item.fact||item);if(!DNA_KEYS.includes(dim))continue;
   counts[dim]=(counts[dim]||0)+1;
   const source=String(item.source||"").toLowerCase();
-  const human=String(item.status||"").toLowerCase()==="artist-confirmed"||source.includes("artist")||!!item.evidence;
+  const human=item.artistReviewed===true||String(item.status||"").toLowerCase()==="artist-confirmed"||source.includes("artist")||!!item.evidence;
   if(human)confirmed[dim]=(confirmed[dim]||0)+1;
  }
  const concept=a.northStar;
