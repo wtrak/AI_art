@@ -21,6 +21,8 @@
  $("manual-interview").addEventListener("click",startInterview);
  $("chat-form").addEventListener("submit",e=>{e.preventDefault();answerQuestion()});
  $("compile-guide").addEventListener("click",assembleGuide);
+ $("audit-interview").addEventListener("click",auditInterview);
+ ["dna-emotion","dna-concept","dna-tradeoffs"].forEach(id=>$(id).addEventListener("change",captureNorthStar));
  $("refine-guide").addEventListener("click",refineGuide);
  $("back-interview").addEventListener("click",()=>goto("interview"));
  $("to-test").addEventListener("click",()=>goto("test"));
@@ -40,12 +42,20 @@
  $("save-session").addEventListener("click",()=>{gather();saveLocal();inform("Local engine draft saved in this browser.")});
  initProfileLibraryUI();
  $("test-good").addEventListener("click",()=>{
-  a.insights.push({fact:"Artist approved a test result as visually aligned.",source:"Artist review"});
-  a.readiness=Math.min(100,Math.round(a.readiness+5));drawSidebar();saveLocal();inform("Approval recorded locally. More varied tests are still recommended.");
+  ensureDNA();
+  a.reviews.push({outcome:"approved",feedback:$("test-feedback").value.trim().slice(0,1200),request:$("test-prompt").value.trim().slice(0,400),at:Date.now()});
+  a.reviews=a.reviews.slice(-20);
+  a.insights.push({fact:"Artist approved a generated test as consistent with the intended creative rules.",dimension:"evaluation",source:"artist test review",status:"artist-confirmed",evidence:$("test-feedback").value.trim().slice(0,500)});
+  updateDNACoverage();drawSidebar();saveLocal();
+  inform("Test approval recorded. Compare more varied subjects before publishing an engine.");
  });
  $("test-bad").addEventListener("click",()=>{
-  $("refine-feedback").value=$("test-feedback").value.trim()||"The latest test output did not accurately reflect my creative practice. Ask me what needs fixing.";
-  goto("guide");inform("Describe what felt wrong and ask the curator to revise your guide.");
+  ensureDNA();
+  const feedback=$("test-feedback").value.trim();
+  a.reviews.push({outcome:"needs-revision",feedback:feedback.slice(0,1200),request:$("test-prompt").value.trim().slice(0,400),at:Date.now()});
+  a.reviews=a.reviews.slice(-20);updateDNACoverage();saveLocal();
+  $("refine-feedback").value=feedback||"The latest test output did not accurately reflect my creative practice. Ask about the emotional or conceptual rule it missed, and correct the guide.";
+  goto("guide");inform("Failed test recorded. Your correction can be applied to the private guide.");
  });
  $("carry-test-feedback").addEventListener("click",()=>{
   const comment=$("test-feedback").value.trim();if(!comment){inform("Write what needs adjusting first.");return}
