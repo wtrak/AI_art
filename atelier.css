@@ -19,3 +19,8 @@
 .ref-card select{font-size:12px!important}
 .ref-card .field{margin-top:11px}
 @media(max-width:850px){.coverage-row{grid-template-columns:130px 1fr 28px}}
+
+.dna-insight-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.dna-insight-actions button{font-size:10px;font-weight:800;border-radius:5px;border:1px solid #c6b9ab;padding:7px 8px;background:#fff;color:#473c35}
+.dna-insight-actions button:hover{background:#f0e6d9}
+.dna-approval{font-size:10px;color:#32633d;font-weight:800;margin-top:7px}
