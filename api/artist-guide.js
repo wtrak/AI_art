@@ -186,60 +186,84 @@ const GUIDE_LIST_FIELDS=[
  "qualityChecks","provenance","uncertainties"
 ];
 const GUIDE_FIELDS=[...GUIDE_TEXT_FIELDS,...GUIDE_LIST_FIELDS,"adaptations"];
+// A short, surgical patch protocol prevents the model from repeating multi-page guide
+// sections in its JSON response. All edits are validated against existing source text.
 const GUIDE_EDIT_SCHEMA={
- type:"object",additionalProperties:false,
- required:["summary","openQuestions","edits"],
+ type:"object",additionalProperties:false,required:["summary","openQuestions","edits"],
  properties:{
-  summary:{type:"string",description:"Brief, precise explanation of the artist's correction."},
-  openQuestions:{type:"array",items:{type:"string"},description:"Only unresolved questions that affect artistic fidelity."},
-  edits:{
-   type:"array",
-   description:"Only the guide fields affected by this correction; all untouched fields are preserved.",
-   items:{
-    type:"object",additionalProperties:false,
-    required:["field","text","items","adaptations"],
+  summary:{type:"string",description:"One short sentence about the corrected creative decision."},
+  openQuestions:{type:"array",items:{type:"string"},description:"Usually empty; at most two short consequential questions."},
+  edits:{type:"array",description:"One to three atomic operations. No complete field rewrites.",
+   items:{type:"object",additionalProperties:false,required:["field","operation","find","value"],
     properties:{
      field:{type:"string",enum:GUIDE_FIELDS},
-     text:{type:"string",description:"FULL revised value for text fields; otherwise empty string."},
-     items:{type:"array",items:{type:"string"},description:"FULL revised list for list fields; otherwise empty array."},
-     adaptations:{type:"array",items:{type:"object",additionalProperties:false,required:["request","approach"],properties:{
-      request:{type:"string"},approach:{type:"string"}
-     }},description:"FULL revised adaptations list for adaptations field; otherwise empty array."}
+     operation:{type:"string",enum:["replace","append","remove"]},
+     find:{type:"string",description:"For replace/remove, an EXACT literal phrase in a text field, an EXACT full list item, or an adaptation request; empty for append except for adaptations."},
+     value:{type:"string",description:"The revised short phrase, one list item, or one adaptation approach. Never paste a full guide section."}
     }
    }
   }
  }
 };
 function applyGuideEdits(guide,edits){
- // Only known keys may be replaced. Never trust the provider to rewrite the entire original.
  if(!guide||typeof guide!=="object"||Array.isArray(guide))throw Error("A valid existing creative guide is required.");
- const next={...guide},changed=[];
- for(const edit of (Array.isArray(edits)?edits:[]).slice(0,10)){
-  if(!edit||!GUIDE_FIELDS.includes(edit.field)||changed.includes(edit.field))continue;
-  const field=edit.field;
+ const next={...guide},changedFields=[];
+ const patches=Array.isArray(edits)?edits.slice(0,4):[];
+ for(const edit of patches){
+  if(!edit||!GUIDE_FIELDS.includes(edit.field)||!["replace","append","remove"].includes(edit.operation))continue;
+  const field=edit.field,op=edit.operation;
+  const find=text(edit.find,600).trim(),value=text(edit.value,700).trim();
+  if(op!=="remove"&&!value)continue;
+  if(op!=="append"&&!find)continue;
   if(GUIDE_TEXT_FIELDS.includes(field)){
-   const value=text(edit.text,7000).trim();
-   if(!value)continue;
-   next[field]=value;
+   const prior=next[field];
+   if(typeof prior!=="string")continue;
+   if(op==="append"){
+    if(value.length<10||prior.includes(value))continue;
+    next[field]=prior.trimEnd()+(prior.trim()?"\n":"")+value;
+   }else{
+    const count=prior.split(find).length-1;
+    if(count!==1)continue; // Reject ambiguous or inaccurate anchors.
+    next[field]=prior.replace(find,op==="remove"?"":value).replace(/\s{2,}/g," ").trim();
+   }
   }else if(GUIDE_LIST_FIELDS.includes(field)){
-   if(!Array.isArray(edit.items)||edit.items.length>35)continue;
-   const value=edit.items.filter(x=>typeof x==="string"&&x.trim()).map(x=>text(x,1500).trim());
-   // Empty lists are meaningful for resolved uncertainties, but not for core rules.
-   if(!value.length&&!["uncertainties","counterexamples"].includes(field))continue;
-   next[field]=value;
+   const prior=next[field];
+   if(!Array.isArray(prior)||!prior.every(x=>typeof x==="string"))continue;
+   const items=[...prior];
+   if(op==="append"){
+    if(items.includes(value))continue;
+    items.push(value);
+   }else{
+    const index=items.findIndex(x=>x===find);
+    if(index<0)continue;
+    if(op==="remove")items.splice(index,1);
+    else items[index]=value;
+   }
+   if(!items.length&&!["uncertainties","counterexamples"].includes(field))continue;
+   next[field]=items;
   }else if(field==="adaptations"){
-   if(!Array.isArray(edit.adaptations)||!edit.adaptations.length||edit.adaptations.length>15)continue;
-   const value=edit.adaptations.filter(x=>x&&typeof x==="object"&&typeof x.request==="string"&&typeof x.approach==="string")
-     .map(x=>({request:text(x.request,600),approach:text(x.approach,1800)}))
-     .filter(x=>x.request.trim()&&x.approach.trim());
-   if(!value.length)continue;
-   next[field]=value;
-  }else continue;
-  changed.push(field);
+   const prior=next.adaptations;
+   if(!Array.isArray(prior)||!prior.every(x=>x&&typeof x.request==="string"&&typeof x.approach==="string"))continue;
+   const items=prior.map(x=>({...x}));
+   if(op==="append"){
+    if(!find||items.some(x=>x.request===find))continue;
+    items.push({request:find,approach:value});
+   }else{
+    const index=items.findIndex(x=>x.request===find);
+    if(index<0)continue;
+    if(op==="remove")items.splice(index,1);
+    else items[index]={...items[index],approach:value};
+   }
+   next.adaptations=items;
+  }
+  if(!changedFields.includes(field))changedFields.push(field);
  }
- if(!changed.length)throw Object.assign(new Error("The AI did not return a usable targeted revision; the previous guide was preserved."),{name:"NoGuideEditsError"});
- return {guide:next,changedFields:changed};
+ if(!changedFields.length)throw Object.assign(
+  new Error("The AI did not return a valid anchored edit. The previous creative guide was preserved."),
+  {name:"NoGuideEditsError"});
+ return {guide:next,changedFields};
 }
+
 async function refineGuideIncrementally(c,feedback){
  const {generateText,Output,jsonSchema}=await import("ai");
  let model=DEEP_MODEL;
@@ -248,23 +272,26 @@ async function refineGuideIncrementally(c,feedback){
   model=createAnthropic({apiKey:process.env.ANTHROPIC_API_KEY})(process.env.CLAUDE_ARTIST_MODEL||"claude-sonnet-5-5");
  }
  const system=INSTRUCTION+"\n"+
-  "ACTION: TARGETED ARTIST GUIDE REFINEMENT. Treat the artist's explicit correction as authoritative.\n"+
-  "The existing guide is already detailed; NEVER regenerate or summarize its entire body. Return ONLY edits to fields directly affected by this correction, normally 1-5 fields.\n"+
-  "Preserve every untouched rule, artistic nuance, exception, source attribution and decision priority EXACTLY by leaving its field absent from edits.\n"+
-  "For text fields use text for the COMPLETE replacement of that ONE field, with items and adaptations empty. For list fields use items for the COMPLETE revised list in that field, with text empty. For adaptations use adaptations with full revised entries, text empty and items empty.\n"+
-  "Keep artist-confirmed details, honor failed-test feedback, and reject superficial aesthetic generalization. Edit provenance and uncertainty lists only when truly affected.\n"+
-  "Never introduce unconfirmed motives or new styles. Give a brief accurate summary and limited open questions.";
+  "ACTION: SURGICAL ARTIST GUIDE CORRECTION. Preserve the artist's existing creative guide and alter only what this correction proves needs changing.\n"+
+  "Return MAXIMUM THREE SHORT PATCHES. Each patch contains four short fields: field, operation, find, value.\n"+
+  "PREFER replace: quote an EXACT short substring from the current field as find and supply only the corrected replacement phrase as value.\n"+
+  "For list fields, find must match ONE COMPLETE existing list item verbatim; value is ONE revised item. For remove, identify exactly one existing phrase or item. For append, value is ONE short new thought or item, not the whole field.\n"+
+  "Adaptations use find as the EXACT existing request and value as the revised approach; append uses find as the NEW request.\n"+
+  "NEVER copy or regenerate entire guide fields, whole lists, full creative narratives or the entire guide. Max 300 characters per value; max 220 per find; max 200 characters in summary; at most 2 short openQuestions.\n"+
+  "When a familiar symbol is acceptable only because of its material role, correct the specific overly broad prohibition or add a precise exception; do not rewrite the creative thesis or unrelated sections.\n"+
+  "Quote existing anchors exactly. If a field needs two corrections, make two tiny operations. Respect original artistic intent and artist-approved distinctions.\n"+
+  "The user-visible guide is merged server-side with the patches, retaining every other nuance. Strict JSON only.";
  const evidence=curatedEvidence(c);
  const response=await generateText({
-  model,output:Output.object({name:"ArtistGuideRevision",description:"Small, precise edits to an existing artist-owned guide",schema:jsonSchema(GUIDE_EDIT_SCHEMA)}),
+  model,output:Output.object({name:"ArtistGuideRevision",description:"Up to three small anchored patches to a private artist guide",schema:jsonSchema(GUIDE_EDIT_SCHEMA)}),
   messages:[
    {role:"system",content:system},
    {role:"user",content:"ARTIST'S CORRECTION (authoritative):\n"+text(feedback,1600)+
      "\n\nEXISTING ARTIST GUIDE AND CONFIRMED EVIDENCE (private):\n"+evidence+
      "\n\nRemember: return only changed fields, not the whole guide."}
   ],
-  maxOutputTokens:4100,
-  abortSignal:AbortSignal.timeout(90000)
+  maxOutputTokens:5200,
+  abortSignal:AbortSignal.timeout(75000)
  });
  if(!response.output||typeof response.output!=="object")throw Error("The curator did not return a structured guide revision.");
  const {guide,changedFields}=applyGuideEdits(c.guide,response.output.edits);
