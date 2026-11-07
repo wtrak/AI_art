@@ -117,11 +117,11 @@ function updateDNACoverage(){
  const checklist=
    (a.artist&&a.engine&&a.intent?10: a.artist&&a.engine?5:0)
    +Math.min(8,refCount*2)
-   +Math.min(26,replies*2)
-   +Math.min(30,distinct*3)
+   +Math.min(20,replies*2)
+   +Math.min(38,distinct*5)
    +north*5
-   +(a.guide?8:0)
-   +Math.min(3,a.reviews.length*2);
+   +(a.guide?7:0)
+   +Math.min(5,a.reviews.length*2);
  // Preserve earlier user progress; never reduce coverage because of a model's fluctuating guess.
  a.readiness=Math.min(100,Math.round(Math.max(Number(a.readiness)||0,checklist)));
  return {score:a.readiness,replies,distinct,north,reviewed:a.reviews.length};
