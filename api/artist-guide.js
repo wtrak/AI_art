@@ -398,6 +398,10 @@ module.exports=async function handler(req,res){
   if(err?.name==="TimeoutError"||err?.name==="AbortError"){
     return send(res,504,{code:"GATEWAY_TIMEOUT",error:"The AI curator timed out. Your work is saved locally; please try again."});
   }
+  if(action==="refine" && ["NoObjectGeneratedError","NoGuideEditsError","SyntaxError"].includes(err?.name)){
+    return send(res,502,{code:"GUIDE_REVISION_FORMAT_ERROR",diagnosticId,
+      error:"The AI returned an unusable refinement. Your existing creative guide has not been changed. Retry your correction; if it happens again, share diagnostic "+diagnosticId+"."});
+  }
   if(err?.name==="GatewayInternalServerError"){
     return send(res,502,{code:"GATEWAY_INTERNAL_ERROR",diagnosticId,error:"Vercel AI Gateway returned an internal error. The server recorded a detailed diagnostic ("+diagnosticId+"). Your artist draft is safe; use Check AI connection to diagnose the gateway without re-uploading artwork."});
   }
