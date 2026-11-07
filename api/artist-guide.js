@@ -1,6 +1,6 @@
 "use strict";
 const crypto=require("node:crypto");
-// Paid Gateway credit is enabled for this project. GPT-4.1 mini supports text, images and PDF inputs.
+// Paid Gateway is configured for this project; curator models are overridable in Vercel.
 // An explicit ARTIST_INTERVIEW_MODEL environment variable can override this default.
 const MODEL=process.env.ARTIST_INTERVIEW_MODEL||"openai/gpt-5.4-mini";
 const DEEP_MODEL=process.env.ARTIST_DEEP_MODEL||"openai/gpt-5.4";
@@ -174,6 +174,104 @@ const SCENE_INTERPRETATION=[
  '"appliedRules":["3-7 artist rules that actually shaped scene choices"],',
  '"artistExplanation":"2-4 sentences explaining the crucial scene decisions to the original artist, without marketing adjectives"}'
 ].join("\n");
+
+// Refinement is an incremental edit, NOT a rewrite of a potentially 30 KB guide.
+// Returning the whole guide previously exhausted output tokens and often produced broken JSON.
+const GUIDE_TEXT_FIELDS=[
+ "publicDescription","creativeThesis","signature","emotionalLogic","conceptualLogic",
+ "composition","color","light","texture","subjectLogic","constraints"
+];
+const GUIDE_LIST_FIELDS=[
+ "priorityHierarchy","decisionRules","avoid","counterexamples",
+ "qualityChecks","provenance","uncertainties"
+];
+const GUIDE_FIELDS=[...GUIDE_TEXT_FIELDS,...GUIDE_LIST_FIELDS,"adaptations"];
+const GUIDE_EDIT_SCHEMA={
+ type:"object",additionalProperties:false,
+ required:["summary","openQuestions","edits"],
+ properties:{
+  summary:{type:"string",description:"Brief, precise explanation of the artist's correction."},
+  openQuestions:{type:"array",items:{type:"string"},description:"Only unresolved questions that affect artistic fidelity."},
+  edits:{
+   type:"array",minItems:1,maxItems:10,
+   description:"Only the guide fields affected by this correction; all untouched fields are preserved.",
+   items:{
+    type:"object",additionalProperties:false,
+    required:["field","text","items","adaptations"],
+    properties:{
+     field:{type:"string",enum:GUIDE_FIELDS},
+     text:{type:"string",description:"FULL revised value for text fields; otherwise empty string."},
+     items:{type:"array",items:{type:"string"},description:"FULL revised list for list fields; otherwise empty array."},
+     adaptations:{type:"array",items:{type:"object",additionalProperties:false,required:["request","approach"],properties:{
+      request:{type:"string"},approach:{type:"string"}
+     }},description:"FULL revised adaptations list for adaptations field; otherwise empty array."}
+    }
+   }
+  }
+ }
+};
+function applyGuideEdits(guide,edits){
+ // Only known keys may be replaced. Never trust the provider to rewrite the entire original.
+ if(!guide||typeof guide!=="object"||Array.isArray(guide))throw Error("A valid existing creative guide is required.");
+ const next={...guide},changed=[];
+ for(const edit of (Array.isArray(edits)?edits:[]).slice(0,10)){
+  if(!edit||!GUIDE_FIELDS.includes(edit.field)||changed.includes(edit.field))continue;
+  const field=edit.field;
+  if(GUIDE_TEXT_FIELDS.includes(field)){
+   const value=text(edit.text,7000).trim();
+   if(!value)continue;
+   next[field]=value;
+  }else if(GUIDE_LIST_FIELDS.includes(field)){
+   if(!Array.isArray(edit.items)||edit.items.length>35)continue;
+   const value=edit.items.filter(x=>typeof x==="string"&&x.trim()).map(x=>text(x,1500).trim());
+   // Empty lists are meaningful for resolved uncertainties, but not for core rules.
+   if(!value.length&&!["uncertainties","counterexamples"].includes(field))continue;
+   next[field]=value;
+  }else if(field==="adaptations"){
+   if(!Array.isArray(edit.adaptations)||!edit.adaptations.length||edit.adaptations.length>15)continue;
+   const value=edit.adaptations.filter(x=>x&&typeof x==="object"&&typeof x.request==="string"&&typeof x.approach==="string")
+     .map(x=>({request:text(x.request,600),approach:text(x.approach,1800)}))
+     .filter(x=>x.request.trim()&&x.approach.trim());
+   if(!value.length)continue;
+   next[field]=value;
+  }else continue;
+  changed.push(field);
+ }
+ if(!changed.length)throw Object.assign(new Error("The AI did not return a usable targeted revision; the previous guide was preserved."),{name:"NoGuideEditsError"});
+ return {guide:next,changedFields:changed};
+}
+async function refineGuideIncrementally(c,feedback){
+ const {generateText,Output,jsonSchema}=await import("ai");
+ let model=DEEP_MODEL;
+ if(process.env.ANTHROPIC_API_KEY){
+  const {createAnthropic}=await import("@ai-sdk/anthropic");
+  model=createAnthropic({apiKey:process.env.ANTHROPIC_API_KEY})(process.env.CLAUDE_ARTIST_MODEL||"claude-sonnet-5-5");
+ }
+ const system=INSTRUCTION+"\n"+
+  "ACTION: TARGETED ARTIST GUIDE REFINEMENT. Treat the artist's explicit correction as authoritative.\n"+
+  "The existing guide is already detailed; NEVER regenerate or summarize its entire body. Return ONLY edits to fields directly affected by this correction, normally 1-5 fields.\n"+
+  "Preserve every untouched rule, artistic nuance, exception, source attribution and decision priority EXACTLY by leaving its field absent from edits.\n"+
+  "For text fields use text for the COMPLETE replacement of that ONE field, with items and adaptations empty. For list fields use items for the COMPLETE revised list in that field, with text empty. For adaptations use adaptations with full revised entries, text empty and items empty.\n"+
+  "Keep artist-confirmed details, honor failed-test feedback, and reject superficial aesthetic generalization. Edit provenance and uncertainty lists only when truly affected.\n"+
+  "Never introduce unconfirmed motives or new styles. Give a brief accurate summary and limited open questions.";
+ const evidence=curatedEvidence(c);
+ const response=await generateText({
+  model,output:Output.object({name:"ArtistGuideRevision",description:"Small, precise edits to an existing artist-owned guide",schema:jsonSchema(GUIDE_EDIT_SCHEMA)}),
+  messages:[
+   {role:"system",content:system},
+   {role:"user",content:"ARTIST'S CORRECTION (authoritative):\n"+text(feedback,1600)+
+     "\n\nEXISTING ARTIST GUIDE AND CONFIRMED EVIDENCE (private):\n"+evidence+
+     "\n\nRemember: return only changed fields, not the whole guide."}
+  ],
+  maxOutputTokens:4100,
+  abortSignal:AbortSignal.timeout(90000)
+ });
+ if(!response.output||typeof response.output!=="object")throw Error("The curator did not return a structured guide revision.");
+ const {guide,changedFields}=applyGuideEdits(c.guide,response.output.edits);
+ return {guide,changedFields,summary:text(response.output.summary,2000),
+  openQuestions:Array.isArray(response.output.openQuestions)?response.output.openQuestions.slice(0,12).map(q=>text(q,400)):[]};
+}
+
 async function test(c,body){
  if(!c.guide)return {status:422,data:{error:"Compile a creative guide before testing."}};
  const prompt=text(body.testPrompt,1200).trim();
@@ -249,7 +347,7 @@ module.exports=async function handler(req,res){
    if(!c.guide)return send(res,422,{error:"Create an initial guide first."});
    const feedback=text(body.feedback,1600);
    if(!feedback)return send(res,422,{error:"Explain what to refine."});
-   response=await modelJSON(COMPILE+"\nARTIST CORRECTION (authoritative): "+feedback+"\nRefine existing guide rather than rewriting it without reason. Preserve provenance and previous decisions unless explicitly superseded.",c,[],5600,true);
+   response=await refineGuideIncrementally(c,feedback);
   }
   if(!response||typeof response!=="object")throw Error("Empty curator answer");
   return send(res,200,{...response,mode:"ai",persisted:false,model:process.env.ANTHROPIC_API_KEY?(process.env.CLAUDE_ARTIST_MODEL||"claude-sonnet-5-5"):(["audit","compile","refine"].includes(action)?DEEP_MODEL:MODEL),provider:process.env.ANTHROPIC_API_KEY?"anthropic-direct":"gateway"});
